@@ -19,7 +19,7 @@ class BreakOut extends JPanel implements Runnable, KeyListener
 	//private POW g;
 	private int frametime;
 	private int spawned;
-	private Board X=new Board();
+	private NewBoard X=new NewBoard();
 
 
 
@@ -101,7 +101,6 @@ class BreakOut extends JPanel implements Runnable, KeyListener
 		}
 		// draw stuff
 		draw(window);
-		X.paint(window,widthRatio,heightRatio);
 
 
 		if (!start) {
@@ -188,7 +187,7 @@ class BreakOut extends JPanel implements Runnable, KeyListener
 	}
 
 	public void draw(Graphics window){
-		PointReader(window);
+		X.paint(window,widthRatio,heightRatio);
 	}
 
 	public void PointReader(Graphics window){

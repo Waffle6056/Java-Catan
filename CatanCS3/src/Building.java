@@ -1,4 +1,6 @@
-public class Building {
+import java.awt.*;
+
+public class Building extends Canvas {
    int resourcegain;
    Player owner;
    boolean inverted;// if Y is upsidedown;
@@ -12,6 +14,14 @@ public class Building {
        upright=ur;
        this.inverted=inverted;
    }
+    public Building(){
+        resourcegain=0;
+        owner=null;
+        down=null;
+        upleft=null;
+        upright=null;
+        this.inverted=false;
+    }
    public void gather(Hex.resource resource){
        //check resource and owner exists
        owner.resources[0]++;
@@ -26,6 +36,8 @@ public class Building {
        if (upleft!=null){ upleft=e.upleft;}
        if (upright!=null){ upright=e.upright;}
    }
-
+    public void paint(Graphics window, int x, int y, int size) {
+       window.drawRect(x-size/2,y-size/2,size,size);
+    }
 
 }
