@@ -65,14 +65,14 @@ public class NewHex extends Canvas {
         mesh.position.add(x,0,y);
         mesh.rotation.rotateAxis((float)Math.toRadians(-90),1,0,0);
         System.out.println(mesh.position);
-        constructBuilding();
+        makeVertexs();
         this.type=resource.valueOf(type);
         tostring="Desert";
     }
     public NewHex(String j){
         tostring=j;
     }
-    public void constructBuilding(){
+    public void makeVertexs(){
         for (int i = 0; i < 6; i++) {
             buildings[i]=new Building();
         }
@@ -84,6 +84,21 @@ public class NewHex extends Canvas {
             }
         }
         return 0;
+    }
+
+    //hex vertex option player
+    //Don't worry about resources
+    //TODO change option to not int
+    public void constructbuilding(HexBuilding vertex,int option, Player owner){
+        buildings[vertex.index].owner=owner;
+        //settlement
+        if (option==1) {
+            buildings[vertex.index].resourcegain = 1;
+        }
+        //city
+        if (option==2){
+            buildings[vertex.index].resourcegain = 2;
+        }
     }
 
 
