@@ -32,6 +32,7 @@ public class NewHex extends Canvas {
 
     Mesh mesh;
     Building[] buildings=new Building[6];
+    Road[] roads=new Road[6];
     String tostring;
     resource type;
     int dicenumber;
@@ -57,8 +58,8 @@ public class NewHex extends Canvas {
         x=(-q+r)*(21*dupe+2);
         y=s*(38*dupe-2);
         size=25*dupe;
-        x/=50;
-        y/=50;
+        x/=45;
+        y/=45;
         size/=100;
 
 
@@ -76,10 +77,11 @@ public class NewHex extends Canvas {
     public void makeVertexs(){
         for (int i = 0; i < 6; i++) {
             buildings[i]=new Building();
+            roads[i]=new Road();
         }
     }
-    public int gather(int rolled){
-        if (type!=resource.Desert&& dicenumber==rolled){
+    public int gather(){
+        if (type!=resource.Desert){
             for (int i = 0; i < buildings.length; i++) {
                 buildings[i].gather(type);
             }
@@ -103,7 +105,12 @@ public class NewHex extends Canvas {
         }
     }
     
-
+public void connectRoads(){
+    System.out.println("Hex connecting");
+    for (int i = 0; i < 6; i++) {
+        roads[i].connectRoads(roads[(i+1)%6]);
+    }
+}
 
     //Sharedside is from the e's point of view
     public void combineHex(NewHex e,int toE){
@@ -113,6 +120,7 @@ public class NewHex extends Canvas {
         }
         e.buildings[awayE].combine(buildings[toE]);
         e.buildings[(awayE+1)%6].combine(buildings[(toE+1)%6]);
+        e.roads[awayE]=roads[awayE];
     }
     public String toString(){
         return tostring;

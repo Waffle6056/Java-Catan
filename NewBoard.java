@@ -3,7 +3,6 @@ import java.io.*;
 import java.util.*;
 import RenderingStuff.Mesh;
 
-import javax.sound.midi.Soundbank;
 
 
 public class NewBoard {
@@ -15,7 +14,7 @@ public class NewBoard {
             makeDefaltBoard(3, 3, 3, "TileAmounts.dat", "DiceTiles.dat");
         }
         catch (Exception e){
-            System.out.println("New Board failed");
+            System.out.println("New Board failed  :"+e);
         }
     }
     //q + r + s = 0
@@ -33,6 +32,7 @@ public class NewBoard {
         Filetiles.nextLine();
         ArrayList<Integer> tiles=new ArrayList<>();
         ArrayList<String> names=new ArrayList<>();
+        numbers=new HashMap<>();
         int d=0;
         while (times-->0){
            names.add(Filetiles.next()); Filetiles.next();
@@ -71,14 +71,12 @@ public class NewBoard {
                     tiles.remove(random);
                     names.remove(random);
                 }
-             //   System.out.println("step 2");
             }
         }
-      //  System.out.println("step 2");
         for(String k:grid.keySet()){
             String[] line=k.split(",");
-            //System.out.println("step 3");
             int q=Integer.parseInt(line[0]), r=Integer.parseInt(line[1]), s=Integer.parseInt(line[2]);
+            grid.get(k).connectRoads();
             if (grid.containsKey(encoder(q-1,r+1,s))){//Right
                 grid.get(k).combineHex(getHex(q-1,r+1,s),3);
             }
@@ -88,7 +86,6 @@ public class NewBoard {
             if (grid.containsKey(encoder(q-1,r,s+1))){//DownRight
                 grid.get(k).combineHex(getHex(q-1,r,s+1),4);
             }
-           // System.out.println(k);
         }
         int q = 1, r = -1, s = 0, dir=0;
         times=dice.nextInt();dice.nextLine();
@@ -106,6 +103,10 @@ public class NewBoard {
                     temp.tostring=tes;
                     int l= Integer.parseInt(tes.split(" ")[2]);
                     temp.setDicenumber(l);
+                    numbers.putIfAbsent(l,new ArrayList<>());
+                    ArrayList<NewHex> adding=numbers.get(l);
+                    adding.add(temp);
+                    numbers.putIfAbsent(l,adding);
                 }
                 else {
                     dir++;i--;
@@ -216,4 +217,10 @@ public class NewBoard {
         }
        // start.paint(window,wrat,hrat);
     }
+    public void rolled(int rolled){
+        for (NewHex hex:numbers.get(rolled)){
+            hex.gather();
+        }
+    }
+
 }
