@@ -91,26 +91,53 @@ public class NewHex extends Canvas {
 
     //hex vertex option player
     //Don't worry about resources
-    public void constructbuilding(HexBuilding vertex, Catan.BuildingOption option, Player owner){
+    public boolean constructbuilding(HexBuilding vertex, Catan.BuildingOption option, Player owner){
+        // moved building conditions in here cuase i needed to check them for both road vertexs
+        if (buildings[vertex.index].owner != owner && buildings[vertex.index].owner != null)
+            return false;
+
         buildings[vertex.index].owner=owner;
         //settlement
         if (option== Catan.BuildingOption.Town) {
+
+            //TODO CHECK ADJACENT BUILDINGS
+
+            if (buildings[vertex.index].type != Catan.BuildingOption.Road)
+                return false;
+
             buildings[vertex.index].resourcegain = 1;
+            buildings[vertex.index].type = option;
             owner.vpvisable++;
+            return true;
         }
         //city
         if (option== Catan.BuildingOption.City){
+            if (buildings[vertex.index].type != Catan.BuildingOption.Town)
+                return false;
             buildings[vertex.index].resourcegain = 2;
+            buildings[vertex.index].type = option;
             owner.vpvisable++;
+            return true;
+        }
+
+        if (option== Catan.BuildingOption.Road){
+
+            // TODO CHECK ADJACENT VERTEXES
+            // TODO CONSTRUCT ROAD IN ROAD SYSTEM
+
+            buildings[vertex.index].type = option;
+            owner.vpvisable++;
+            return true;
+        }
+        return false;
+    }
+
+    public void connectRoads(){
+        System.out.println("Hex connecting");
+        for (int i = 0; i < 6; i++) {
+            roads[i].connectRoads(roads[(i+1)%6]);
         }
     }
-    
-public void connectRoads(){
-    System.out.println("Hex connecting");
-    for (int i = 0; i < 6; i++) {
-        roads[i].connectRoads(roads[(i+1)%6]);
-    }
-}
 
     //Sharedside is from the e's point of view
     public void combineHex(NewHex e,int toE){
@@ -166,10 +193,10 @@ public void connectRoads(){
         //find and image for your paddle and put it here
         Graphics2D g2 = (Graphics2D) window;
         Image img1 = Toolkit.getDefaultToolkit().getImage("Ball2.png"); //use .gif or .png, you can choose the image
-       // g2.drawImage(img1,(int)(10*wrat), (int)(10*hrat), (int)(10*wrat), (int)(10*hrat), this);
+        // g2.drawImage(img1,(int)(10*wrat), (int)(10*hrat), (int)(10*wrat), (int)(10*hrat), this);
         window.drawPolygon(poly);
-       Font steal=  window.getFont();
-       steal= steal.deriveFont((float)(5.1*(wrat+hrat)));
+        Font steal=  window.getFont();
+        steal= steal.deriveFont((float)(5.1*(wrat+hrat)));
         window.setFont(steal);
         window.drawString(q+","+r+","+s,(int) (wrat*(x- (double) size /4)),(int) (hrat*y));
         window.drawString(tostring,(int) (wrat*(x- (double) size /4)),(int) (hrat*y*34/32));
