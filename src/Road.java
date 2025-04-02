@@ -51,6 +51,9 @@ public class Road {
         }
 
     }
+    public void made(Player owner){
+        this.owner=owner;
+    }
 
     public static int RoadPath(Player owner, Road cu, Set<Integer> visited){//TODO check if work
         if (cu==null || visited.contains(cu.creation) || cu.owner!=owner){

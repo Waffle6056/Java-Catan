@@ -127,16 +127,27 @@ public class Catan {
             Mesh m = new Mesh(file);
             m.position.add(b.x,1,b.y);
             b.mesh = m;
-          //  Renderer.addMesh(m);
+//            Renderer.addMeshes(m);
         }
     }
     void nextPlayerTurn(){
         turnInd = (turnInd+1)%players.size();
         turnPlayer = players.get(turnInd);
 
-        //TODO ROLL TO GATHER
+        roll();
 
         currentPhase = Phase.BuildingTrading;
+    }
+    void roll(){
+        int one= (int)(Math.random()*6)+1,two= (int)(Math.random()*6)+1;
+        int random=one+two;
+        Board.rolled(random);
+        if (random==7){
+            //TODO Move RobberBaron
+            //Select New Hex
+            //assign is RobberBaron
+            //Steal from near Player
+        }
     }
     void bindKeys(){
         Renderer.bindCallback((window, key, scancode, action, mods) -> {
@@ -247,7 +258,7 @@ public class Catan {
             NewHex hex = selectHex(mouseClickPos);
             NewHex.HexBuilding ver = selectVertex(hex, mouseClickPos);
 
-            hex.constructbuilding(ver, Option, turnPlayer); //TODO BUILDING REQUIREMENTS OF SETTLEMENTS & BUILDINGS
+            hex.constructbuilding(ver, Option, turnPlayer); //TODO BUILDING REQUIREMENTS OF SETTLEMENTS & BUILDINGS Done
 
             float radius = 1;// arbitrary value temp
             hex.buildings[ver.index].x = hex.x + Math.sin(Math.toRadians(60 * ver.index)) * radius;
@@ -268,7 +279,7 @@ public class Catan {
             NewHex hex2 = selectHex(mouseClickPos2);
             NewHex.HexBuilding ver2 = selectVertex(hex2, mouseClickPos2);
 
-            hex1.constructRoads(ver1,ver2, BuildingOption.Road, turnPlayer); //TODO BUILDING REQUIREMENTS OF ROADS
+            hex1.constructRoads(ver1,ver2, BuildingOption.Road, turnPlayer); //TODO BUILDING REQUIREMENTS OF ROADS Done
             return true;
         }
         return false;

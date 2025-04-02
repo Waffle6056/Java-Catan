@@ -9,6 +9,8 @@ public class Player {
     CardHolder<NewHex.resource> ResourceCards = new CardHolder<>();
     CardHolder<CardHolder<NewHex.resource>> TradingCards = new CardHolder<>();
     int vpvisable=0,vphidden=0;
+    int longestRoad=0,knights=0;
+    boolean hasLongestRoad,HasKnights;
     public Player(){
         Playercreate("Tester");
     }

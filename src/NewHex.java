@@ -3,6 +3,8 @@ import java.io.*;
 import java.util.*;
 import RenderingStuff.Mesh;
 
+import javax.sound.midi.Soundbank;
+
 public class NewHex extends Canvas {
     enum resource{
         Brick(0),
@@ -12,7 +14,7 @@ public class NewHex extends Canvas {
         Wool(4),
         Desert(-1),
         Sea(-2);
-        final int index;
+        public final int index;
         resource(int l) {
             this.index =l;
         }
@@ -24,7 +26,7 @@ public class NewHex extends Canvas {
         Down(3),
         DownLeft(4),
         UpLeft(5);
-        final int index;
+       public final int index;
         HexBuilding(int l) {
             this.index =l;
         }
@@ -39,7 +41,7 @@ public class NewHex extends Canvas {
     float x, y, size;
     int dupe = 2;
     int orginx=200,orginy=100;
-
+    static NewHex isRobberBaroned;
     int q,r,s;
     //q + r + s = 0
     //Neighbors
@@ -70,6 +72,10 @@ public class NewHex extends Canvas {
         makeVertexs();
         this.type=resource.valueOf(type);
         tostring="Desert";
+        if (this.type.equals(resource.Desert)){
+           // System.out.println("I own the Land");
+            isRobberBaroned=this;
+        }
     }
     public NewHex(String j){
         tostring=j;
@@ -81,7 +87,7 @@ public class NewHex extends Canvas {
         }
     }
     public int gather(){
-        if (type!=resource.Desert){
+        if (type!=resource.Desert || this.equals(isRobberBaroned)){
             for (int i = 0; i < buildings.length; i++) {
                 buildings[i].gather(type);
             }
@@ -90,36 +96,62 @@ public class NewHex extends Canvas {
     }
 
     public boolean constructRoads(HexBuilding ver1, HexBuilding ver2, Catan.BuildingOption option, Player owner){
+        Building one=buildings[ver1.index],two=buildings[ver2.index];
+        if (!(one.owner==owner||two.owner==owner)){
+            return false;
+        }
+        for (int i = 0; i < 3; i++) {
+            if (one.getRoads()[i]==null){
+                continue;
+            }
+            if (one.getRoads()[i].left.equals(two)||one.getRoads()[i].right.equals(two)){
+               one.getRoads()[i].made(owner);
+               return true;
+            }
+        }
         return false;
-
     }
     //hex vertex option player
     //Don't worry about resources
     public boolean constructbuilding(HexBuilding vertex, Catan.BuildingOption option, Player owner){
         // moved building conditions in here cuase i needed to check them for both road vertexs
-        if (buildings[vertex.index].owner != owner && buildings[vertex.index].owner != null)
+        Building temp=buildings[vertex.index];
+        if (temp.owner != owner && temp.owner != null)
             return false;
 
-        buildings[vertex.index].owner=owner;
+       temp.owner=owner;
         //settlement
         if (option== Catan.BuildingOption.Town) {
 
-            //TODO CHECK ADJACENT BUILDINGS
+            //CHECK ADJACENT BUILDINGS
+            boolean goodRoad=false;
+            for (int i = 0; i < 3; i++) {
+                if (temp.getRoads()[i]==null){
+                    continue;
+                }
+                Building left=temp.getRoads()[i].left,right=temp.getRoads()[i].right;
+                if (goodRoad||temp.getRoads()[i].owner==owner){
+                    goodRoad=true;
+                }
+                if (left.owner!=null||right.owner!=null){
+                    return false;
+                }
+            }
 
-            if (buildings[vertex.index].type != Catan.BuildingOption.Road)
+            if (!goodRoad ||temp.type != Catan.BuildingOption.Road)
                 return false;
 
-            buildings[vertex.index].resourcegain = 1;
-            buildings[vertex.index].type = option;
+            temp.resourcegain = 1;
+            temp.type = option;
             owner.vpvisable++;
             return true;
         }
         //city
         if (option== Catan.BuildingOption.City){
-            if (buildings[vertex.index].type != Catan.BuildingOption.Town)
+            if (temp.type != Catan.BuildingOption.Town)
                 return false;
-            buildings[vertex.index].resourcegain = 2;
-            buildings[vertex.index].type = option;
+            temp.resourcegain = 2;
+            temp.type = option;
             owner.vpvisable++;
             return true;
         }
@@ -128,8 +160,9 @@ public class NewHex extends Canvas {
 
             // TODO CHECK ADJACENT VERTEXES
             // TODO CONSTRUCT ROAD IN ROAD SYSTEM
+            // Has it own system
 
-            buildings[vertex.index].type = option;
+            temp.type = option;
             owner.vpvisable++;
             return true;
         }

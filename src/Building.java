@@ -44,6 +44,10 @@ public class Building extends Canvas {
             }
         }
     }
+    public Road[] getRoads(){
+        return roads;
+    }
+
 
     public void paint(Graphics window, int x, int y, int size) {
         window.drawRect(x-size/2,y-size/2,size,size);
