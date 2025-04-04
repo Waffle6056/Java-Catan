@@ -1,0 +1,26 @@
+  public void combineHex(NewHex e,int toE){
+        int awayE=toE-3;
+        if (awayE<0){
+            awayE+=6;
+        }
+        e.buildings[awayE]=(buildings[toE]);
+        e.buildings[(awayE+1)%6]=(buildings[(toE+1)%6]);
+        e.roads[awayE]=roads[awayE];
+    }
+
+ for(String k:grid.keySet()){
+            String[] line=k.split(",");
+            int q=Integer.parseInt(line[0]), r=Integer.parseInt(line[1]), s=Integer.parseInt(line[2]);
+            if (grid.containsKey(encoder(q-1,r+1,s))){//Right
+                grid.get(k).combineHex(getHex(q-1,r+1,s),3);
+            }
+            if (grid.containsKey(encoder(q,r-1,s+1))){//DownLeft
+                grid.get(k).combineHex(getHex(q,r-1,s+1),5);
+            }
+            if (grid.containsKey(encoder(q-1,r,s+1))){//DownRight
+                grid.get(k).combineHex(getHex(q-1,r,s+1),4);
+            }
+        }
+        for (String k:grid.keySet()){
+            grid.get(k).connectRoads();
+        }
