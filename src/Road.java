@@ -56,13 +56,35 @@ public class Road {
         }
 
     }
-    public void setPos(NewHex hex, NewHex.HexBuilding ver){
-        float radius = 0.75f;// arbitrary value temp
-        float indexOffset = 2.5f;
+    public void setPos(NewHex hex1, NewHex.HexBuilding ver1, NewHex hex2, NewHex.HexBuilding ver2){
+        float radius = 1.2f;// arbitrary value temp
+        float indexOffset = 3f;
+
         //float angleOffset = -30f;
-        angle = 60 * (-ver.index+indexOffset);
-        x = hex.x + Math.sin(Math.toRadians(angle)) * radius;
-        y = hex.y + Math.cos(Math.toRadians(angle)) * radius;
+        float x1 = hex1.x + Math.sin(Math.toRadians(60 * (-ver1.index+indexOffset))) * radius;
+        float y1 = hex1.y + Math.cos(Math.toRadians(60 * (-ver1.index+indexOffset))) * radius;
+
+        float x2 = hex2.x + Math.sin(Math.toRadians(60 * (-ver2.index+indexOffset))) * radius;
+        float y2 = hex2.y + Math.cos(Math.toRadians(60 * (-ver2.index+indexOffset))) * radius;
+
+        x = (x1 + x2) / 2;
+        y = (y1 + y2) / 2;
+
+        if (x1 > x2){
+            float swap = x1;
+            x1 = x2;
+            x2 = swap;
+
+            swap = y1;
+            y1 = y2;
+            y2 = swap;
+        }
+
+        if (y2 > y1)
+            angle = -Math.toDegrees(Math.atan2(Math.abs(y2-y1),Math.abs(x2-x1)));
+        else
+            angle = Math.toDegrees(Math.atan2(Math.abs(y2-y1),Math.abs(x2-x1)));
+        System.out.println(angle + " "+Math.abs(x2-x1)+" "+Math.abs(y2-y1));
     }
     public void made(Player owner){
         this.owner=owner;

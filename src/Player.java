@@ -4,12 +4,14 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 
 public class Player {
-    int[] resources =new int[]{1, 1, 1, 1, 1};
+    int[] resources =new int[]{7, 5, 3, 7, 5};
     String name;
     CardHolder<CardHolder> UIElements = new CardHolder<>();
     CardHolder<DevelopmentCard> DevelopmentCards = new CardHolder<>();
     CardHolder<NewHex.resource> ResourceCards = new CardHolder<>();
     CardHolder<CardHolder<NewHex.resource>> TradingCards = new CardHolder<>();
+    CardHolder<NewHex.resource> OpenTrade = new CardHolder<>();
+    int settlements = 5, cities = 4;
     int vpvisable=0,vphidden=0;
     public Player(){
         Playercreate("Tester");
@@ -20,13 +22,18 @@ public class Player {
     public void Playercreate(String name){
         this.name=name;
         UIElements.add(DevelopmentCards);
-        DevelopmentCards.position = new Vector3f(-0.3f,-0.4f,1);
+        DevelopmentCards.position = new Vector3f(-0.2f,-0.2f,.5f);
+        DevelopmentCards.len = 0.2f;
 
         UIElements.add(ResourceCards);
-        ResourceCards.position = new Vector3f(0.3f,-0.4f,1f);
+        ResourceCards.position = new Vector3f(0.4f,-0.4f,1f);
 
         UIElements.add(TradingCards);
-        TradingCards.position = new Vector3f(0,0,1);
+        TradingCards.position = new Vector3f(0.4f,0.4f,1f);
+        TradingCards.rotation = (float) Math.toRadians(180f);
+
+        UIElements.add(OpenTrade);
+        OpenTrade.position = new Vector3f(0,0,1);
     }
     public int[] getResources(){
         return resources;

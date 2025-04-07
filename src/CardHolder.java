@@ -10,6 +10,8 @@ public class CardHolder<E> {
     List<Card<E>> CardsSelected = new ArrayList<>();
     boolean visible = false;
     public Vector3f position = new Vector3f(0,0,0);
+    public float rotation = 0;
+    public float len = 0.05f;
     List<Mesh> meshes = new ArrayList<>();
     public Card<E> add(Card<E> card){
         Cards.add(card);
@@ -24,12 +26,31 @@ public class CardHolder<E> {
     public Card<E> add(E data, String meshFile){
         return add(new Card<>(data, meshFile));
     }
+    public void addAll(CardHolder<E> other){
+        for (Card<E> c : other.Cards)
+            add(c);
+    }
+    public void addAll(List<Card<E>> other) {
+        for (Card<E> c : other)
+            add(c);
+    }
+    public void remove(Card<E> card){
+        Cards.remove(card);
+        if (card.mesh != null)
+            meshes.remove(card.mesh);
+        if (card.HighLight != null)
+            meshes.remove(card.HighLight);
+    }
+    public void removeAll(List<Card<E>> cards){
+        for (Card<E> c : cards)
+            remove(c);
+    }
     public void trade(CardHolder<E> other){
-        Cards.removeAll(CardsSelected);
-        other.Cards.removeAll(other.CardsSelected);
+        removeAll(CardsSelected);
+        other.removeAll(other.CardsSelected);
 
-        Cards.addAll(other.CardsSelected);
-        other.Cards.addAll(CardsSelected);
+        addAll(other.CardsSelected);
+        other.addAll(CardsSelected);
 
         List<Card<E>> swap = CardsSelected;
         CardsSelected = other.CardsSelected;
@@ -57,10 +78,14 @@ public class CardHolder<E> {
             return;
         Card<E> Current = Cards.get(ind);
         Current.selected = !Current.selected;
-        if (Current.selected)
+        if (Current.selected) {
             CardsSelected.add(Current);
-        else
+            meshes.add(Current.HighLight);
+        }
+        else {
             CardsSelected.remove(Current);
+            meshes.remove(Current.HighLight);
+        }
     }
 
     public void toggleVisible(){
@@ -75,7 +100,7 @@ public class CardHolder<E> {
     }
     public List<Mesh> getMeshes(){return meshes;}
     public void setPositions(){
-        System.out.println(current().data+" "+ind);
+        //System.out.println(current().data+" "+ind);
         for (int i = 0; i < Cards.size(); i++){
             if (Cards.get(i).mesh != null) {
                 Vector3f c = new Vector3f(position);
@@ -84,14 +109,21 @@ public class CardHolder<E> {
                 float angle = (float)Math.toRadians(180f/7f) * midDiff;
                 float len = 0.1f;
                 if (midDiff == 0)
-                    len += 0.05f;
-                c.add(new Vector3f(0,len,0).rotateZ(angle));
+                    len += this.len;
+                Vector3f rotated = new Vector3f(0,len,0).rotateZ(angle + rotation);
+                c.add(rotated);
 
-                System.out.println(c);
+                //System.out.println(c);
 
                 Cards.get(i).mesh.position = c;
                 Cards.get(i).mesh.rotation = new Quaternionf();//.lookAlong(c,new Vector3f(0,1,0));
-                Cards.get(i).mesh.rotation.rotateLocalX((float)Math.toRadians(-90)).rotateLocalZ(angle);//.lookAlong(c,position);
+                Cards.get(i).mesh.rotation.rotateLocalY((float)Math.toRadians(180)).rotateLocalX((float)Math.toRadians(90)).rotateLocalZ(angle + rotation);//.lookAlong(c,position);
+
+                if (Cards.get(i).selected){
+                    Cards.get(i).HighLight.position = c.add(0,0,0.01f, new Vector3f());
+                    //System.out.println("HAS HIGHLIGHT "+Cards.get(i).HighLight.position);
+                    Cards.get(i).HighLight.rotation = Cards.get(i).mesh.rotation;
+                }
             }
         }
     }

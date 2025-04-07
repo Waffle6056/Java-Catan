@@ -9,6 +9,7 @@ public class Building extends Canvas {
     Player owner;
     boolean inverted;// if Y is upsidedown;
     Mesh mesh;
+    //boolean overrides = false;
     Road[] roads=new Road[3];
 
     public Building(){
@@ -30,7 +31,7 @@ public class Building extends Canvas {
 //        if (upright!=null) upright.connect(this);
 //    }
     public void setPos(NewHex hex, NewHex.HexBuilding ver){
-        float radius = 0.75f;// arbitrary value temp
+        float radius = 1.2f;// arbitrary value temp
         float indexOffset = 3f;
         //float angleOffset = 30f;
         x = hex.x + Math.sin(Math.toRadians(60 * (-ver.index+indexOffset))) * radius;
@@ -48,7 +49,7 @@ public class Building extends Canvas {
                 return;
             }
             if (roads[i].creation==e.creation){
-                System.out.println("Doublework");
+                //System.out.println("Doublework");
                 return;
             }
         }
