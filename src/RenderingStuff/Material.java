@@ -22,26 +22,29 @@ public class Material {
      //i cannot get this to import the material texture
     public Material(AIMaterial material){
         AIString out = AIString.create();
-      //  System.out.println(aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, out, (IntBuffer) null, null, null, null, null, null));
+        //System.out.println();
+        aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, out, (IntBuffer) null, null, null, null, null, null);
         //System.out.println(naiGetMaterialTexture());
-        for (int i = aiTextureType_NONE; i <= aiTextureType_MAYA_SPECULAR_ROUGHNESS; i++) {
-            //System.out.println(i);
-            if (aiGetMaterialTextureCount(material, i) != 0)
-                System.out.println(aiGetMaterialTextureCount(material, i) + " " + i);
-        }
+//        for (int i = aiTextureType_NONE; i <= aiTextureType_MAYA_SPECULAR_ROUGHNESS; i++) {
+//            //System.out.println(i);
+//            if (aiGetMaterialTextureCount(material, i) != 0)
+//                System.out.println(aiGetMaterialTextureCount(material, i) + " " + i);
+//        }
 
-      //  System.out.println(out.dataString()+" "+out+" "+out.data().toString());
-      //  System.out.println();
+        ///System.out.println(out.dataString()+" "+out+" "+out.data().toString());
         //processMaterial(material,"dir/");
         diffuseBuffer = createTexture(out.dataString());
     }
     int createTexture(String path){
-
         int[] width = new int[1], height = new int[1], nrChannels = new int[1];
-        //System.out.println(path);
-        ByteBuffer imageData = STBImage.stbi_load(path, width, height, nrChannels,0);
-
-        //System.out.println(imageData+" "+nrChannels[0]);
+        if (path.contains(":\\Java-Catan\\")) {
+            path = path.replaceAll(".*\\\\","");
+        }
+        ByteBuffer imageData = STBImage.stbi_load(path, width, height, nrChannels,4);
+        if (imageData == null)
+            imageData = STBImage.stbi_load(path.replaceAll("\\\\","/"), width, height, nrChannels,4);
+        //System.out.println(STBImage.stbi_failure_reason());
+        //System.out.println(imageData+" "+nrChannels[0]+" "+path);
 
         int Texture = glGenTextures();
         glActiveTexture(GL_TEXTURE0);
@@ -52,9 +55,10 @@ public class Material {
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST_MIPMAP_NEAREST);
 
-        glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width[0],height[0],0,GL_RGB,GL_UNSIGNED_BYTE,imageData);
+       // System.out.println("START TEX "+nrChannels[0]);
+        glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,width[0],height[0],0,GL_RGBA,GL_UNSIGNED_BYTE,imageData);
         glGenerateMipmap(GL_TEXTURE_2D);
-
+        //System.out.println("END TEX");
         return Texture;
     }
     void enable(){

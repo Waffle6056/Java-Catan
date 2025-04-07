@@ -24,9 +24,10 @@ public class CatanWindow {
     private long window;
     public Shader shader;
     public Camera camera = new Camera();
-    int width = 800, height = 600;
+    int width = 1600, height = 1200;
     List<Mesh> meshes = new ArrayList<>();
-    Matrix4f projection;
+    public List<Mesh> meshes2d = new ArrayList<>();
+    Matrix4f projection; Matrix4f view2d = new Matrix4f().identity().lookAt(new Vector3f(0,0,0),new Vector3f(0,0,1), new Vector3f(0,1,0));
     public void run() {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
 
@@ -67,9 +68,15 @@ public class CatanWindow {
         // Poll for window events. The key callback above will only be
         // invoked during this call.
         glfwPollEvents();
+        camera.update(window, shader, delta);
         for (Mesh mesh : meshes)
             mesh.draw(shader);
-        camera.update(window, shader, delta);
+
+        shader.setUniform("view", view2d);
+        for (Mesh mesh : meshes2d)
+            mesh.draw(shader);
+
+
         glfwSwapBuffers(window); // swap the color buffers
 
     }
@@ -162,10 +169,23 @@ public class CatanWindow {
     public int getKey(int key){
         return glfwGetKey(window, key);
     }
-    public int getMouseButton(int button){
-        return glfwGetMouseButton(window, button);
+
+    public int getMouseButton(int button){return glfwGetMouseButton(window, button);}
+    public void removeMesh(Mesh mesh){meshes.remove(mesh);}
+    public void removeMeshes(List<Mesh> meshes){
+        this.meshes.removeAll(meshes);
     }
+    public void addMesh(Mesh mesh){meshes.add(mesh);}
     public void addMeshes(List<Mesh> meshes){
         this.meshes.addAll(meshes);
+    }
+    public void addMesh2d(Mesh mesh){meshes2d.add(mesh);}
+    public void addMeshes2d(List<Mesh> meshes){
+        this.meshes2d.addAll(meshes);
+    }
+
+    public void removeMesh2d(Mesh mesh){meshes2d.remove(mesh);}
+    public void removeMeshes2d(List<Mesh> meshes){
+        this.meshes2d.removeAll(meshes);
     }
 }

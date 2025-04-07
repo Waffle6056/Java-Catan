@@ -1,5 +1,6 @@
 package RenderingStuff;
 
+import RenderingStuff.Shader;
 import org.joml.*;
 
 import static org.lwjgl.glfw.GLFW.*;

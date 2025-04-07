@@ -76,20 +76,39 @@ public class NewBoard {
         for(String k:grid.keySet()){
             String[] line=k.split(",");
             int q=Integer.parseInt(line[0]), r=Integer.parseInt(line[1]), s=Integer.parseInt(line[2]);
-            grid.get(k).connectRoads();
+
             if (grid.containsKey(encoder(q-1,r+1,s))){//Right
-                grid.get(k).combineHex(getHex(q-1,r+1,s),3);
+                //System.out.println(getHex(q-1,r+1,s).x+" "+getHex(q-1,r+1,s).y+" |currently index 1| "+grid.get(k).x+" "+grid.get(k).y);
+                grid.get(k).combineHex(getHex(q-1,r+1,s),1);
             }
             if (grid.containsKey(encoder(q,r-1,s+1))){//DownLeft
-                grid.get(k).combineHex(getHex(q,r-1,s+1),5);
+                grid.get(k).combineHex(getHex(q,r-1,s+1),3);
             }
             if (grid.containsKey(encoder(q-1,r,s+1))){//DownRight
-                grid.get(k).combineHex(getHex(q-1,r,s+1),4);
+                grid.get(k).combineHex(getHex(q-1,r,s+1),2);
+            }
+
+            if (grid.containsKey(encoder(q+1,r-1,s))){//Left
+                grid.get(k).combineHex(getHex(q+1,r-1,s),4);
+            }
+            if (grid.containsKey(encoder(q,r+1,s-1))){//UpRight
+                grid.get(k).combineHex(getHex(q,r+1,s-1),0);
+            }
+            if (grid.containsKey(encoder(q+1,r,s-1))){//UpLeft
+                grid.get(k).combineHex(getHex(q+1,r,s-1),5);
             }
         }
+        for(String k:grid.keySet()){
+            grid.get(k).connectRoads();
+        }
+
         int q = 1, r = -1, s = 0, dir=0;
         times=dice.nextInt();dice.nextLine();
         HashSet<String> vist=new HashSet<>();
+        for (int i = 2; i <= 12; i++) {
+            numbers.putIfAbsent(i, new ArrayList<>());
+        }
+
         for (int i = 0; i < times; i++) {
             if (dir==0){
                 if (!vist.contains(encoder(q-1,r+1,s))&& grid.containsKey(encoder(q-1,r+1,s))){
@@ -103,17 +122,14 @@ public class NewBoard {
                     temp.tostring=tes;
                     int l= Integer.parseInt(tes.split(" ")[2]);
                     temp.setDicenumber(l);
-                    numbers.putIfAbsent(l,new ArrayList<>());
-                    ArrayList<NewHex> adding=numbers.get(l);
-                    adding.add(temp);
-                    numbers.putIfAbsent(l,adding);
+                    numbers.get(l).add(temp);
                 }
                 else {
                     dir++;i--;
                 }
             }
             else if (dir==1){
-                if (!vist.contains(encoder(q-1,r,s+1)) && grid.containsKey(encoder(q-1,r,s+1))){
+                if (!vist.contains(encoder(q-1,r,s+1)) && grid.containsKey(encoder(q-1,r,s+1)   )){
                     q--;s++;
                     NewHex temp= grid.get(encoder(q,r,s));
                     vist.add(encoder(q,r,s));
@@ -124,6 +140,7 @@ public class NewBoard {
                     temp.tostring=tes;
                     int l= Integer.parseInt(tes.split(" ")[2]);
                     temp.setDicenumber(l);
+                    numbers.get(l).add(temp);
                 }
                 else {
                     dir++;i--;
@@ -141,6 +158,7 @@ public class NewBoard {
                     temp.tostring=tes;
                     int l= Integer.parseInt(tes.split(" ")[2]);
                     temp.setDicenumber(l);
+                    numbers.get(l).add(temp);
                 }
                 else {
                     dir++;i--;
@@ -148,7 +166,7 @@ public class NewBoard {
             }
             else if (dir==3){
                 if (!vist.contains(encoder(q+1,r-1,s)) &&grid.containsKey(encoder(q+1,r-1,s))){
-                    r--;q++;
+                    q++;r--;
                     NewHex temp= grid.get(encoder(q,r,s));
                     vist.add(encoder(q,r,s));
                     if (temp.type== NewHex.resource.Desert){
@@ -158,6 +176,7 @@ public class NewBoard {
                     temp.tostring=tes;
                     int l= Integer.parseInt(tes.split(" ")[2]);
                     temp.setDicenumber(l);
+                    numbers.get(l).add(temp);
                 }
                 else {
                     dir++;i--;
@@ -174,6 +193,7 @@ public class NewBoard {
                     temp.tostring=tes;
                     int l= Integer.parseInt(tes.split(" ")[2]);
                     temp.setDicenumber(l);
+                    numbers.get(l).add(temp);
                 }
                 else {
                     dir++;i--;
@@ -191,6 +211,7 @@ public class NewBoard {
                     temp.tostring=tes;
                     int l= Integer.parseInt(tes.split(" ")[2]);
                     temp.setDicenumber(l);
+                    numbers.get(l).add(temp);
                 }
                 else {
                     dir=0;i--;
@@ -206,8 +227,15 @@ public class NewBoard {
     }
     public java.util.List<Mesh> getMeshes(){
         java.util.List<Mesh> meshList = new ArrayList<>();
+        //System.out.println("GET MESHES CALLED");
         for(String k:grid.keySet()){
             meshList.add(grid.get(k).mesh);
+            if (grid.get(k).numberMesh != null) {
+                //System.out.println("number here "+grid.get(k).numberMesh.position);
+                meshList.add(grid.get(k).numberMesh);
+            }
+//            else
+//                System.out.println("nope ");
         }
         return meshList;
     }
@@ -218,6 +246,7 @@ public class NewBoard {
         // start.paint(window,wrat,hrat);
     }
     public void rolled(int rolled){
+        System.out.println(numbers);
         for (NewHex hex:numbers.get(rolled)){
             hex.gather();
         }

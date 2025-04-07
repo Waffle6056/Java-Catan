@@ -22,7 +22,7 @@ public class Mesh {
     void importData(String filePath){
         AIScene scene = Assimp.aiImportFile(filePath, Assimp.aiProcess_JoinIdenticalVertices | Assimp.aiProcess_Triangulate);
 
-        if (scene == null) System.err.println("Couldn't load model at " + filePath);
+        if (scene == null) System.err.println("Couldn't load model at " + filePath +" "+Assimp.aiGetErrorString());
 
         for (int i = 0; i < scene.mNumMaterials(); i++)
             materials.add(new Material(AIMaterial.create(scene.mMaterials().get(i))));

@@ -43,7 +43,7 @@ public class VertexCollection {
             if (mesh.mNumUVComponents().get(0) != 0) {
                 AIVector3D texture = mesh.mTextureCoords(0).get(i);
                 textureUVData[i*2+0] = texture.x();
-                textureUVData[i*2+1] = texture.y();
+                textureUVData[i*2+1] = 1-texture.y();
             }
         }
 

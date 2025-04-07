@@ -91,6 +91,7 @@ public class Shader {
                 "   vec3 specular = light.specular * lightColor.rgb * specularVal;\n"+
 
                 "   FragColor = vec4(ambient + diffuse + specular,1);\n" +
+                //"   FragColor = vec4(lightColor,1);\n" +
                 "} ";
         glShaderSource(fragmentShader,fragmentCode);
         glCompileShader(fragmentShader);
@@ -111,9 +112,9 @@ public class Shader {
         glDeleteShader(fragmentShader);
 
 
-        glUniform3f(glGetUniformLocation(shaderProgram,"light.pos"),2f,0f,0f);
-        glUniform3f(glGetUniformLocation(shaderProgram,"light.ambient"),1.0f,1.0f,1.0f);
-        glUniform3f(glGetUniformLocation(shaderProgram,"light.diffuse"),1.0f,1.0f,1.0f);
+        glUniform3f(glGetUniformLocation(shaderProgram,"light.pos"),1.9555556f,2f,3.288889f);
+        glUniform3f(glGetUniformLocation(shaderProgram,"light.ambient"),0.5f,0.5f,0.5f);
+        glUniform3f(glGetUniformLocation(shaderProgram,"light.diffuse"),0.7f,0.7f,0.7f);
         glUniform3f(glGetUniformLocation(shaderProgram,"light.specular"),0.5f,0.5f,0.5f);
 //
 //        glUniform1f(glGetUniformLocation(shaderProgram,"ambientStrength"),.1f);

@@ -26,13 +26,13 @@ public class NewHex extends Canvas {
         Down(3),
         DownLeft(4),
         UpLeft(5);
-       public final int index;
+        public final int index;
         HexBuilding(int l) {
             this.index =l;
         }
     }
 
-    Mesh mesh;
+    Mesh mesh, numberMesh;
     Building[] buildings=new Building[6];
     Road[] roads=new Road[6];
     String tostring;
@@ -56,7 +56,18 @@ public class NewHex extends Canvas {
         this.q=q;
         this.r=r;
         this.s=s;
-        mesh = new Mesh("catan.fbx");
+        this.type=resource.valueOf(type);
+        switch (this.type)
+        {
+            case Brick -> mesh = new Mesh("HexMeshes/Hills.fbx");
+            case Wool -> mesh = new Mesh("HexMeshes/Plains.fbx");
+            case Desert -> mesh = new Mesh("HexMeshes/Desert.fbx");
+            case Rock -> mesh = new Mesh("HexMeshes/Mountains.fbx");
+            case Grain -> mesh = new Mesh("HexMeshes/Field.fbx");
+            case Wood -> mesh = new Mesh("HexMeshes/Forest.fbx");
+            default -> mesh = new Mesh("catan.fbx");
+        }
+
         x=(-q+r)*(21*dupe+2);
         y=s*(38*dupe-2);
         size=25*dupe;
@@ -68,12 +79,11 @@ public class NewHex extends Canvas {
 
         mesh.position.add(x,0,y);
         mesh.rotation.rotateAxis((float)Math.toRadians(-90),1,0,0);
-        System.out.println(mesh.position);
+        //System.out.println(mesh.position);
         makeVertexs();
-        this.type=resource.valueOf(type);
         tostring="Desert";
         if (this.type.equals(resource.Desert)){
-           // System.out.println("I own the Land");
+            // System.out.println("I own the Land");
             isRobberBaroned=this;
         }
     }
@@ -95,18 +105,32 @@ public class NewHex extends Canvas {
         return 0;
     }
 
-    public boolean constructRoads(HexBuilding ver1, HexBuilding ver2, Catan.BuildingOption option, Player owner){
-        Building one=buildings[ver1.index],two=buildings[ver2.index];
-        if (!(one.owner==owner||two.owner==owner)){
+//    String buildingToString(Building b){
+//        return b.x+" "+b.y;
+//    }
+    static boolean ownerRequirementOverride = false;
+    public boolean constructRoads(HexBuilding ver1, NewHex hex2, HexBuilding ver2, Catan.BuildingOption option, Player owner, Road[] out){
+        Building one=buildings[ver1.index],two=hex2.buildings[ver2.index];
+        System.out.println("started ");
+        if (ownerRequirementOverride)
+            ;
+        else if (!(one.owner==owner||two.owner==owner)){
             return false;
         }
+        if (one == two)
+            return false;
+        System.out.println("passed check 2 "+two);
         for (int i = 0; i < 3; i++) {
             if (one.getRoads()[i]==null){
                 continue;
             }
+            System.out.println(one.getRoads()[i].left+" "+one.getRoads()[i].right);
             if (one.getRoads()[i].left.equals(two)||one.getRoads()[i].right.equals(two)){
-               one.getRoads()[i].made(owner);
-               return true;
+                System.out.println("passed check 3");
+                one.getRoads()[i].made(owner);
+                one.getRoads()[i].setPos(this, ver1, hex2, ver2);
+                out[0] = one.getRoads()[i];
+                return true;
             }
         }
         return false;
@@ -116,10 +140,12 @@ public class NewHex extends Canvas {
     public boolean constructbuilding(HexBuilding vertex, Catan.BuildingOption option, Player owner){
         // moved building conditions in here cuase i needed to check them for both road vertexs
         Building temp=buildings[vertex.index];
+
+        System.out.println("called");
         if (temp.owner != owner && temp.owner != null)
             return false;
+        System.out.println("passed check 1");
 
-       temp.owner=owner;
         //settlement
         if (option== Catan.BuildingOption.Town) {
 
@@ -133,17 +159,22 @@ public class NewHex extends Canvas {
                 if (goodRoad||temp.getRoads()[i].owner==owner){
                     goodRoad=true;
                 }
-                if (left.owner!=null||right.owner!=null){
-                    return false;
-                }
+                if (left.type == Catan.BuildingOption.City || left.type == Catan.BuildingOption.Town)
+                    if (left.owner!=null&&left.owner!=owner || right.owner!=null&&right.owner!=owner){
+                        return false;
+                    }
             }
 
+            System.out.println("passed check 2");
             if (!goodRoad ||temp.type != Catan.BuildingOption.Road)
                 return false;
 
+            System.out.println("passed check 3");
             temp.resourcegain = 1;
             temp.type = option;
+            temp.owner=owner;
             owner.vpvisable++;
+            temp.setPos(this,vertex);
             return true;
         }
         //city
@@ -152,17 +183,15 @@ public class NewHex extends Canvas {
                 return false;
             temp.resourcegain = 2;
             temp.type = option;
+            temp.owner=owner;
             owner.vpvisable++;
             return true;
         }
 
         if (option== Catan.BuildingOption.Road){
 
-            // TODO CHECK ADJACENT VERTEXES
-            // TODO CONSTRUCT ROAD IN ROAD SYSTEM
-            // Has it own system
-
             temp.type = option;
+            temp.owner=owner;
             owner.vpvisable++;
             return true;
         }
@@ -170,7 +199,7 @@ public class NewHex extends Canvas {
     }
 
     public void connectRoads(){
-       // System.out.println("Hex connecting");
+        // System.out.println("Hex connecting");
         for (int i = 0; i < 6; i++) {
             roads[i].connectRoads(roads[(i+1)%6]);
             roads[i].connectBuildings(buildings[i]);
@@ -184,15 +213,36 @@ public class NewHex extends Canvas {
         if (awayE<0){
             awayE+=6;
         }
-        e.buildings[awayE].combine(buildings[toE]);
-        e.buildings[(awayE+1)%6].combine(buildings[(toE+1)%6]);
-        e.roads[awayE]=roads[awayE];
+        e.buildings[(awayE+1)%6].combine(buildings[toE]);
+        e.buildings[awayE].combine(buildings[(toE+1)%6]);
+        e.buildings[(awayE+1)%6] = buildings[toE];
+        e.buildings[awayE] = buildings[(toE+1)%6];
+        e.roads[awayE]=roads[toE];
     }
     public String toString(){
         return tostring;
     }
     public void setDicenumber(int number){
         dicenumber=number;
+        String file = "";
+        //System.out.println("DICE SET TO "+number);
+        switch (number){
+            case 2 -> file = "Numbers/Two.fbx";
+            case 3 -> file = "Numbers/Three.fbx";
+            case 4 -> file = "Numbers/Four.fbx";
+            case 5 -> file = "Numbers/Five.fbx";
+            case 6 -> file = "Numbers/Six.fbx";
+            case 8 -> file = "Numbers/Eight.fbx";
+            case 9 -> file = "Numbers/Nine.fbx";
+            case 10 -> file = "Numbers/Ten.fbx";
+            case 11 -> file = "Numbers/Eleven.fbx";
+            case 12 -> file = "Numbers/Twelve.fbx";
+        }
+        numberMesh = new Mesh(file);
+
+        //System.out.println(file);
+        numberMesh.rotation.rotateX((float)java.lang.Math.toRadians(-90));
+        numberMesh.position.add(mesh.position);
     }
     public void paint( Graphics window,double wrat,double hrat )
     {

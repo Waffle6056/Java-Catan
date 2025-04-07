@@ -1,5 +1,7 @@
 import java.awt.*;
 import RenderingStuff.Mesh;
+import org.joml.Math;
+
 public class Building extends Canvas {
     float x, y;
     Catan.BuildingOption type = Catan.BuildingOption.Road;
@@ -7,6 +9,7 @@ public class Building extends Canvas {
     Player owner;
     boolean inverted;// if Y is upsidedown;
     Mesh mesh;
+    //boolean overrides = false;
     Road[] roads=new Road[3];
 
     public Building(){
@@ -27,6 +30,13 @@ public class Building extends Canvas {
 //        if (upleft!=null) upleft.connect(this);
 //        if (upright!=null) upright.connect(this);
 //    }
+    public void setPos(NewHex hex, NewHex.HexBuilding ver){
+        float radius = 1.2f;// arbitrary value temp
+        float indexOffset = 3f;
+        //float angleOffset = 30f;
+        x = hex.x + Math.sin(Math.toRadians(60 * (-ver.index+indexOffset))) * radius;
+        y = hex.y + Math.cos(Math.toRadians(60 * (-ver.index+indexOffset))) * radius;
+    }
     public void combine(Building e){
         if (e.mesh != null)
             mesh = e.mesh;
@@ -39,7 +49,7 @@ public class Building extends Canvas {
                 return;
             }
             if (roads[i].creation==e.creation){
-                System.out.println("Doublework");
+                //System.out.println("Doublework");
                 return;
             }
         }

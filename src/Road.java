@@ -1,11 +1,16 @@
+import RenderingStuff.Mesh;
+import org.joml.Math;
+
 import java.util.Set;
 
 public class Road {
     Player owner;
     Road[] connects=new Road[4];
     Building left, right;
+    Mesh mesh;
     int creation=a;
     static int a=0;
+    float x, y, angle;
     public Road(){
         owner=null;
         a++;
@@ -44,12 +49,42 @@ public class Road {
             return;
         }
         else if (left.equals(one)){
-                return;
+            return;
         }
         if (right==null){
             right=one;
         }
 
+    }
+    public void setPos(NewHex hex1, NewHex.HexBuilding ver1, NewHex hex2, NewHex.HexBuilding ver2){
+        float radius = 1.2f;// arbitrary value temp
+        float indexOffset = 3f;
+
+        //float angleOffset = -30f;
+        float x1 = hex1.x + Math.sin(Math.toRadians(60 * (-ver1.index+indexOffset))) * radius;
+        float y1 = hex1.y + Math.cos(Math.toRadians(60 * (-ver1.index+indexOffset))) * radius;
+
+        float x2 = hex2.x + Math.sin(Math.toRadians(60 * (-ver2.index+indexOffset))) * radius;
+        float y2 = hex2.y + Math.cos(Math.toRadians(60 * (-ver2.index+indexOffset))) * radius;
+
+        x = (x1 + x2) / 2;
+        y = (y1 + y2) / 2;
+
+        if (x1 > x2){
+            float swap = x1;
+            x1 = x2;
+            x2 = swap;
+
+            swap = y1;
+            y1 = y2;
+            y2 = swap;
+        }
+
+        if (y2 > y1)
+            angle = -Math.toDegrees(Math.atan2(Math.abs(y2-y1),Math.abs(x2-x1)));
+        else
+            angle = Math.toDegrees(Math.atan2(Math.abs(y2-y1),Math.abs(x2-x1)));
+        System.out.println(angle + " "+Math.abs(x2-x1)+" "+Math.abs(y2-y1));
     }
     public void made(Player owner){
         this.owner=owner;
