@@ -111,7 +111,7 @@ public class NewHex extends Canvas {
     static boolean ownerRequirementOverride = false;
     public boolean constructRoads(HexBuilding ver1, NewHex hex2, HexBuilding ver2, Catan.BuildingOption option, Player owner, Road[] out){
         Building one=buildings[ver1.index],two=hex2.buildings[ver2.index];
-        System.out.println("started ");
+        System.out.println("called build "+option);
         if (ownerRequirementOverride)
             ;
         else if (!(one.owner==owner||two.owner==owner)){
@@ -119,14 +119,14 @@ public class NewHex extends Canvas {
         }
         if (one == two)
             return false;
-        System.out.println("passed check 2 "+two);
+        //System.out.println("passed check 2 "+two);
         for (int i = 0; i < 3; i++) {
             if (one.getRoads()[i]==null){
                 continue;
             }
-            System.out.println(one.getRoads()[i].left+" "+one.getRoads()[i].right);
+            //System.out.println(one.getRoads()[i].left+" "+one.getRoads()[i].right);
             if (one.getRoads()[i].left.equals(two)||one.getRoads()[i].right.equals(two)){
-                System.out.println("passed check 3");
+                //System.out.println("passed check 3");
                 one.getRoads()[i].made(owner);
                 one.getRoads()[i].setPos(this, ver1, hex2, ver2);
                 out[0] = one.getRoads()[i];
@@ -140,11 +140,11 @@ public class NewHex extends Canvas {
     public boolean constructbuilding(HexBuilding vertex, Catan.BuildingOption option, Player owner){
         // moved building conditions in here cuase i needed to check them for both road vertexs
         Building temp=buildings[vertex.index];
-
-        System.out.println("called");
+        if (option != Catan.BuildingOption.Road)
+            System.out.println("called build "+option);
         if (temp.owner != owner && temp.owner != null)
             return false;
-        System.out.println("passed check 1");
+        //System.out.println("passed check 1");
 
         //settlement
         if (option== Catan.BuildingOption.Town) {
@@ -160,16 +160,17 @@ public class NewHex extends Canvas {
                     goodRoad=true;
                 }
                 if (left.type == Catan.BuildingOption.City || left.type == Catan.BuildingOption.Town)
-                    if (left.owner!=null&&left.owner!=owner || right.owner!=null&&right.owner!=owner){
-                        return false;
-                    }
+                    return false;
+                if (right.type == Catan.BuildingOption.City || right.type == Catan.BuildingOption.Town)
+                    return false;
+
             }
 
-            System.out.println("passed check 2");
+            //System.out.println("passed check 2");
             if (!goodRoad ||temp.type != Catan.BuildingOption.Road)
                 return false;
 
-            System.out.println("passed check 3");
+            //System.out.println("passed check 3");
             temp.resourcegain = 1;
             temp.type = option;
             temp.owner=owner;
@@ -242,7 +243,7 @@ public class NewHex extends Canvas {
 
         //System.out.println(file);
         numberMesh.rotation.rotateX((float)java.lang.Math.toRadians(-90));
-        numberMesh.position.add(mesh.position);
+        numberMesh.position.add(mesh.position).add(0,-.25f,0);
     }
     public void paint( Graphics window,double wrat,double hrat )
     {

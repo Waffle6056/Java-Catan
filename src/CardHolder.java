@@ -10,10 +10,14 @@ CardHolder<E> {
     int ind = 0;
     List<Card<E>> CardsSelected = new ArrayList<>();
     boolean visible = false;
+    Player owner;
     public Vector3f position = new Vector3f(0,0,0);
     public float rotation = 0;
     public float len = 0.05f;
     List<Mesh> meshes = new ArrayList<>();
+    public CardHolder(Player owner){
+        this.owner = owner;
+    }
     public Card<E> add(Card<E> card){
         Cards.add(card);
         if (card.mesh != null)
@@ -40,25 +44,23 @@ CardHolder<E> {
     }
     public void remove(Card<E> card){
         Cards.remove(card);
+        CardsSelected.remove(card);
         if (card.mesh != null)
             meshes.remove(card.mesh);
         if (card.HighLight != null)
             meshes.remove(card.HighLight);
     }
     public void removeAll(List<Card<E>> cards){
-        for (Card<E> c : cards)
-            remove(c);
+        for (int i = cards.size()-1; i >= 0; i--)
+            remove(cards.get(i));
     }
     public void trade(CardHolder<E> other){
-        removeAll(CardsSelected);
-        other.removeAll(other.CardsSelected);
-
         addAll(other.CardsSelected);
         other.addAll(CardsSelected);
 
-        List<Card<E>> swap = CardsSelected;
-        CardsSelected = other.CardsSelected;
-        other.CardsSelected = swap;
+        removeAll(CardsSelected);
+        other.removeAll(other.CardsSelected);
+
     }
     public void clear(){
         Cards.clear();
@@ -73,7 +75,7 @@ CardHolder<E> {
         setPositions();
     }
     public Card<E> current(){
-        if (Cards.size() == 0)
+        if (Cards.size() == 0 || ind < 0 || ind >= Cards.size())
             return null;
         return Cards.get(ind);
     }
@@ -114,7 +116,7 @@ CardHolder<E> {
                 Vector3f c = new Vector3f(position);
 
                 int midDiff = i-ind;
-                float angle = (float)Math.toRadians(180f/7f) * midDiff;
+                float angle = (float)Math.toRadians(Math.min(180f/Cards.size(), 180f/7f)) * midDiff;
                 float len = 0.1f;
                 if (midDiff == 0)
                     len += this.len;

@@ -246,7 +246,7 @@ public class NewBoard {
         // start.paint(window,wrat,hrat);
     }
     public void rolled(int rolled){
-        System.out.println(numbers);
+        //System.out.println(numbers);
         for (NewHex hex:numbers.get(rolled)){
             hex.gather();
         }

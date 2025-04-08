@@ -84,7 +84,7 @@ public class Road {
             angle = -Math.toDegrees(Math.atan2(Math.abs(y2-y1),Math.abs(x2-x1)));
         else
             angle = Math.toDegrees(Math.atan2(Math.abs(y2-y1),Math.abs(x2-x1)));
-        System.out.println(angle + " "+Math.abs(x2-x1)+" "+Math.abs(y2-y1));
+        //System.out.println(angle + " "+Math.abs(x2-x1)+" "+Math.abs(y2-y1));
     }
     public void made(Player owner){
         this.owner=owner;

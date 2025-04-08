@@ -24,7 +24,7 @@ public class CatanWindow {
     private long window;
     public Shader shader;
     public Camera camera = new Camera();
-    int width = 1600, height = 1200;
+    int width = 1600, height = 1000;
     List<Mesh> meshes = new ArrayList<>();
     public List<Mesh> meshes2d = new ArrayList<>();
     Matrix4f projection; Matrix4f view2d = new Matrix4f().identity().lookAt(new Vector3f(0,0,0),new Vector3f(0,0,1), new Vector3f(0,1,0));
@@ -151,8 +151,8 @@ public class CatanWindow {
     }
 
     // the only collision in the scene will be the xz plane
-    public Vector3f getMousePos(){ //TODO
-        float res = Intersectionf.intersectRayPlane(camera.camPos, camera.camDir, new Vector3f(0,0,0), new Vector3f(0,1,0),camera.epsilon);
+    public Vector3f getMousePos(){
+        float res = Intersectionf.intersectRayPlane(camera.camPos, camera.camDir, new Vector3f(0,1,0), new Vector3f(0,1,0),camera.epsilon);
         Vector3f out = new Vector3f(camera.camPos).add(camera.camDir.mul(res, new Vector3f()));
         //System.out.println(res+" "+out);
         return out;
