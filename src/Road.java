@@ -86,6 +86,12 @@ public class Road {
             angle = Math.toDegrees(Math.atan2(Math.abs(y2-y1),Math.abs(x2-x1)));
         //System.out.println(angle + " "+Math.abs(x2-x1)+" "+Math.abs(y2-y1));
     }
+    public boolean connectsWith(Player p){
+        for (Road r : connects)
+            if (r != null && r.owner == p)
+                return true;
+        return left != null && left.owner == p || right != null && right.owner == p;
+    }
     public void made(Player owner){
         this.owner=owner;
     }

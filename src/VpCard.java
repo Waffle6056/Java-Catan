@@ -4,6 +4,6 @@ public class VpCard extends DevelopmentCard {
     public String meshFile(){ return "CatanCardMeshes/Development/CardVictoryPointOne.fbx";}
     @Override
     public void use(Catan instance) {//TODO TODO TODO
-        instance.turnPlayer.vpvisable++;
+        instance.turnPlayer.vp++;
     }
 }

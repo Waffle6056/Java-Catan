@@ -1,6 +1,7 @@
 import java.util.*;
 
 public abstract class DevelopmentCard {// NOT A CARD CHILD JUST SAME NAME
+    public boolean enabled = false;
     public abstract void use(Catan instance);
     public String meshFile(){ return "unassigned";}
     public static Stack<DevelopmentCard> deck;

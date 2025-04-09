@@ -1,8 +1,7 @@
 import RenderingStuff.Mesh;
 import org.joml.Vector3f;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
+import java.util.*;
 
 public class Player {
     int[] resources =new int[]{4, 2, 0, 4, 2};
@@ -16,13 +15,20 @@ public class Player {
     String roadFile = "Buildings/Road.fbx";
     String settlementFile = "Buildings/Settlement.fbx";
     String cityFile = "Buildings/City.fbx";
-    int settlements = 5, cities = 4;
-    int vpvisable=0,vphidden=0;
+    int settlements = 5, cities = 4, developmentCardLimit = 1;
+    int vp = 0;
+    int longestRoad=0,army=0;
+    static Player mason=new Player("Mason Of The World");
+    static Player baron=new Player("Baron Of The World");
     public Player(){
         Playercreate("Tester");
     }
+    public Player(String name){
+        Playercreate(name);
+    }
     public Player(String name, String markFile){
-        this.markFile = markFile; Playercreate(name);
+        this.markFile = markFile;
+        Playercreate(name);
     }
     public void Playercreate(String name){
         this.name=name;
@@ -51,6 +57,10 @@ public class Player {
         UIElements.get(3).HighLight.position = OpenTrade.position;
 
     }
+    public boolean hasWon(){
+        return 10<=(vp+(this == mason?2:0)+(this == baron?2:0));
+    }
+
     public int[] getResources(){
         return resources;
     }
@@ -73,7 +83,17 @@ public class Player {
         for (Card<NewHex.resource> card : ResourceCards.Cards)
             resources[card.data.index]++;
     }
-    public boolean hasWon(){
-        return 10<=(vpvisable+vphidden);
+    //return null if no player has won;
+    public static void redopoints(List<Player> players) {//TODO call at end turn
+        for (int i = 0; i < players.size(); i++) {
+            Player cu = players.get(i);
+            if (cu.army >= 3 && cu.army > baron.army) {
+                baron = cu;
+            }
+            if (cu.longestRoad >= 5 && cu.longestRoad > mason.longestRoad) {
+                mason = cu;
+            }
+
+        }
     }
 }

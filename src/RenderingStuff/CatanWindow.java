@@ -77,6 +77,8 @@ public class CatanWindow {
             mesh.draw(shader);
 
 
+
+
         glfwSwapBuffers(window); // swap the color buffers
 
     }

@@ -1,9 +1,6 @@
 import java.awt.*;
-import java.io.*;
-import java.util.*;
-import RenderingStuff.Mesh;
 
-import javax.sound.midi.Soundbank;
+import RenderingStuff.Mesh;
 
 public class NewHex extends Canvas {
     enum resource{
@@ -112,23 +109,22 @@ public class NewHex extends Canvas {
     public boolean constructRoads(HexBuilding ver1, NewHex hex2, HexBuilding ver2, Catan.BuildingOption option, Player owner, Road[] out){
         Building one=buildings[ver1.index],two=hex2.buildings[ver2.index];
         System.out.println("called build "+option);
-        if (ownerRequirementOverride)
-            ;
-        else if (!(one.owner==owner||two.owner==owner)){
-            return false;
-        }
         if (one == two)
             return false;
         //System.out.println("passed check 2 "+two);
         for (int i = 0; i < 3; i++) {
-            if (one.getRoads()[i]==null){
+            Road r = one.getRoads()[i];
+            if (r==null || r.owner != null && r.owner != owner){
                 continue;
             }
+            if (!ownerRequirementOverride && !r.connectsWith(owner))
+                continue;
             //System.out.println(one.getRoads()[i].left+" "+one.getRoads()[i].right);
-            if (one.getRoads()[i].left.equals(two)||one.getRoads()[i].right.equals(two)){
+            if (r.left.equals(two)||r.right.equals(two)){
                 //System.out.println("passed check 3");
-                one.getRoads()[i].made(owner);
-                one.getRoads()[i].setPos(this, ver1, hex2, ver2);
+
+                r.made(owner);
+                r.setPos(this, ver1, hex2, ver2); // mesh pos
                 out[0] = one.getRoads()[i];
                 return true;
             }
@@ -167,14 +163,14 @@ public class NewHex extends Canvas {
             }
 
             //System.out.println("passed check 2");
-            if (!goodRoad ||temp.type != Catan.BuildingOption.Road)
+            if (!goodRoad)
                 return false;
 
             //System.out.println("passed check 3");
             temp.resourcegain = 1;
             temp.type = option;
             temp.owner=owner;
-            owner.vpvisable++;
+            owner.vp++;
             temp.setPos(this,vertex);
             return true;
         }
@@ -185,7 +181,7 @@ public class NewHex extends Canvas {
             temp.resourcegain = 2;
             temp.type = option;
             temp.owner=owner;
-            owner.vpvisable++;
+            owner.vp++;
             return true;
         }
 
@@ -193,7 +189,7 @@ public class NewHex extends Canvas {
 
             temp.type = option;
             temp.owner=owner;
-            owner.vpvisable++;
+            owner.vp++;
             return true;
         }
         return false;
