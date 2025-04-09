@@ -1,0 +1,12 @@
+   if (i<playersCount){
+                roundone.add(out[0]);
+                out[0].resourcegain=0;
+            }
+        }
+        for (int i = 0; i < roundone.size(); i++) {
+            roundone.get(i).resourcegain=1;
+        }
+
+public ArrayList<Building> roundone;
+
+roundone=new ArrayList<>();
