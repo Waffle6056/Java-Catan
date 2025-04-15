@@ -96,4 +96,40 @@ public class Player {
 
         }
     }
+    boolean payCheck(int a, int b, int c, int d, int e){
+        if (resources[0] < a)
+            return false;
+        if (resources[1] < b)
+            return false;
+        if (resources[2] < c)
+            return false;
+        if (resources[3] < d)
+            return false;
+        if (resources[4] < e)
+            return false;
+        return true;
+    }
+    boolean checkAmt(Catan.BuildingOption Option){
+        switch (Option){
+            case Road: return payCheck(1,0,0,1,0);
+            case Town: return payCheck(1,1,0,1,1);
+            case City: return payCheck(0,2,3,0,0);
+        }
+        return false;
+    }
+    void pay(Catan.BuildingOption Option){
+        switch (Option) {
+            case Road -> pay(1,0,0,1,0);
+            case Town -> pay(1,1,0,1,1);
+            case City -> pay(0,2,3,0,0);
+        }
+    }
+    void pay(int a, int b, int c, int d, int e){
+        resources[0] -= a;
+        resources[1] -= b;
+        resources[2] -= c;
+        resources[3] -= d;
+        resources[4] -= e;
+
+    }
 }

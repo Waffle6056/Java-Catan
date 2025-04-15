@@ -16,8 +16,11 @@ public class Catan {
     NewBoard Board;
     List<Player> players;
     Player turnPlayer;
+    Player Bank;
     int turnInd;
-    Mesh cursor, sky, ocean, robber;
+    Mesh cursor, sky, ocean;
+    RobberBaron robber;
+
 
     enum BuildingOption{
         Road,
@@ -68,7 +71,6 @@ public class Catan {
     Queue<Building> MeshQueue = new LinkedList<>();
     Queue<Road> MeshQueueRoad = new LinkedList<>();
 
-    Queue<Player> victims = new LinkedList<>();
 
     public void run(){
         Renderer = new CatanWindow();
@@ -100,10 +102,8 @@ public class Catan {
         //m.rotation.rotateAxis(Math.toRadians(90),1,0,0);
         Renderer.addMesh2d(m);
 
-        robber = new Mesh("HexMeshes/Robber.fbx");
-        robber.rotation.rotateX((float)java.lang.Math.toRadians(-90));
-        robber.position.add(0,-5,0);
-        Renderer.addMesh(robber);
+        robber = new RobberBaron(this);
+        Renderer.addMesh(robber.mesh);
 
         guideElement.position = new Vector3f(0f,-0.2f,0.5f);
         guideElement.len = 0.2f;
@@ -136,7 +136,7 @@ public class Catan {
         }
 
 
-        Player Bank = new Player("BANK", "CatanCardMeshes/Special/Arrow.fbx");
+        Bank = new Player("BANK", "CatanCardMeshes/Special/Arrow.fbx");
         Bank.resources = new int[]{5,5,5,5,5};
         Bank.updateResourcesToCards();
         for (int i = 0; i < playersCount; i++){
@@ -172,14 +172,14 @@ public class Catan {
             System.out.println("PLAYER "+ind);
 
             System.out.println("BUILD A ROAD");
-            while (!build(BuildingOption.Road))
+            while (!Board.build(BuildingOption.Road, turnPlayer, this))
                 System.out.println("failed try again");
 
             waitMouseRelease();
 
             Building[] out = new Building[1];
             System.out.println("BUILD A TOWN");
-            while (!build(BuildingOption.Town, out))
+            while (!Board.build(BuildingOption.Town, turnPlayer, this, out))
                 System.out.println("failed try again");
             //System.out.println(out[0].resourcegain);
             if (i<playersCount){
@@ -218,7 +218,7 @@ public class Catan {
 //            //stest.rotation.rotateAxis((float)(1*delta),.9f,.25f,.1f);
 //            test.draw(Renderer.shader);
             InstantiateBuildingMeshes();
-            rob();
+            robber.rob();
             updateDiceVisual();
             Renderer.update(delta);
             //Renderer.getMousePos();
@@ -251,39 +251,7 @@ public class Catan {
         roll();
     }
 
-    public void robberThread(){
-        currentPhase = Phase.Rolling;
-        try {
-            //System.out.println("start build");
-            new Thread( () -> {
 
-                //Select New Hex
-                waitMouseRelease();
-
-                Vector3f mouseClickPos = waitMouseClick();
-                NewHex hex = selectHex(mouseClickPos);
-                while (NewHex.isRobberBaroned == hex) {
-                    System.out.println("ROBBER MUST MOVE TO A DIFFERENT HEX");
-                    waitMouseRelease();
-                    mouseClickPos = waitMouseClick();
-                    hex = selectHex(mouseClickPos);
-
-                }
-                //assign is RobberBaron
-                NewHex.isRobberBaroned = hex;
-                robber.position = new Vector3f(hex.mesh.position.x, 2.75f, hex.mesh.position.z);
-                //Steal from near Player
-                for (int i = 0; i < 6; i++)
-                    if (hex.buildings[i].owner != null){
-                        Player victim = hex.buildings[i].owner;
-                        victims.add(victim);
-                    }
-                if (currentPhase == Phase.Rolling)
-                    currentPhase = Phase.BuildingTrading;
-            }).start();
-
-        } catch (Exception e){}
-    }
 
     void roll(){
         roll1 = (int)(Math.random()*6)+1; roll2= (int)(Math.random()*6)+1;
@@ -293,7 +261,7 @@ public class Catan {
         Board.rolled(random);
 
         if (random==7){
-            robberThread();
+            robber.startRobbing();
         }
         else
             currentPhase = Phase.BuildingTrading;
@@ -314,8 +282,10 @@ public class Catan {
                     toggleVisible(turnPlayer.ResourceCards);
 
                 }
-                if (key == GLFW_KEY_C)
+                if (key == GLFW_KEY_C) {
                     toggleVisible(turnPlayer.TradingCards);
+                    //  System.out.println(turnPlayer.TradingCards.Cards.size());
+                }
                 if (key == GLFW_KEY_V)
                     toggleVisible(turnPlayer.OpenTrade);
 
@@ -369,8 +339,8 @@ public class Catan {
                     toggleVisible(turnPlayer.ResourceCards, false);
                     startBuildThread(BuildingOption.City);
                 }
-                if (key == GLFW_KEY_4 && payCheck(0, 1, 1, 0, 1)) {
-                    pay(0, 1, 1, 0, 1);
+                if (key == GLFW_KEY_4 && turnPlayer.payCheck(0, 1, 1, 0, 1)) {
+                    turnPlayer.pay(0, 1, 1, 0, 1);
                     toggleVisible(turnPlayer.ResourceCards, false);
                     DevelopmentCard d = DevelopmentCard.createNew();
                     //System.out.println(d.meshFile);
@@ -380,91 +350,22 @@ public class Catan {
                 if (key == GLFW_KEY_F)
                     tradeCurrentSelectedCards();
 
-                if (key == GLFW_KEY_ENTER)
+                if (key == GLFW_KEY_ENTER) {
+                    toggleVisible(turnPlayer.ResourceCards, false);
+                    turnPlayer.updateResourcesToCards();
                     nextPlayerTurn();
+                }
+
             }
 
         });
     }
-    boolean build(BuildingOption Option) {
-        return build(Option, new Building[1]);
-    }
-    boolean build(BuildingOption Option, Building[] out) {
 
-        //check if required resource amount
-        // return false if not enought
-        if (!checkAmt(Option))
-            return false;
-
-        if (Option == BuildingOption.Town || Option == BuildingOption.City){
-            if (Option == BuildingOption.Town && turnPlayer.settlements == 0)
-                return false;
-            if (Option == BuildingOption.City && turnPlayer.cities == 0)
-                return false;
-
-            waitMouseRelease();
-
-            Vector3f mouseClickPos = waitMouseClick();
-            NewHex hex = selectHex(mouseClickPos);
-            NewHex.HexBuilding ver = selectVertex(hex, mouseClickPos);
-
-            //System.out.println(hex.x + " " + hex.y+" "+ver+" "+hex.buildings[ver.index]);
-            if (hex.constructbuilding(ver, Option, turnPlayer)) {
-                pay(Option);
-                if (Option == BuildingOption.City) {
-                    Renderer.removeMesh(hex.buildings[ver.index].mesh);
-                    turnPlayer.settlements++;
-                    turnPlayer.cities--;
-                }
-                else
-                    turnPlayer.settlements--;
-                MeshQueue.add(hex.buildings[ver.index]);
-                //System.out.println("COMPLETED BUILDING "+hex.buildings[ver.index].type);
-                out[0] = hex.buildings[ver.index];
-                return true;
-                //System.out.println("built town/city "+hex.mesh.position+" "+ver);
-            }
-            return false;
-        }
-        else if (Option == BuildingOption.Road){
-
-            waitMouseRelease();
-
-            Vector3f mouseClickPos1 = waitMouseClick();
-            NewHex hex1 = selectHex(mouseClickPos1);
-            NewHex.HexBuilding ver1 = selectVertex(hex1, mouseClickPos1);
-
-            waitMouseRelease();
-
-            Vector3f mouseClickPos2 = waitMouseClick();
-            NewHex hex2 = selectHex(mouseClickPos2);
-            NewHex.HexBuilding ver2 = selectVertex(hex2, mouseClickPos2);
-
-            //System.out.println(hex1.x+" "+hex1.y+" "+ver1);
-            //System.out.println(hex2.x+" "+hex2.y+" "+ver2);
-
-            Road[] t = new Road[1];
-            if (hex1.constructRoads(ver1, hex2, ver2, BuildingOption.Road, turnPlayer, t)){
-                MeshQueueRoad.add(t[0]);
-                pay(Option);
-//                hex1.constructbuilding(ver1, BuildingOption.Road, turnPlayer);
-//                hex2.constructbuilding(ver2, BuildingOption.Road, turnPlayer);
-                return true;
-            }
-            else
-                return false;
-
-        }
-        return false;
-    }
     NewHex.resource selectResource(){
         while (Renderer.getKey(GLFW_KEY_R) != GLFW_PRESS);
         return turnPlayer.OpenTrade.current().data;
     }
-    void RobAllResource(NewHex.resource r){
-        for (Player p : players)
-            rob();
-    }
+
 
     String[] dieMeshes = {
             "Numbers/DieOne.fbx",
@@ -493,41 +394,7 @@ public class Catan {
         die2.position = new Vector3f(0.1f,0.32f,1f);
         Renderer.addMesh2d(die2);
     }
-    boolean payCheck(int a, int b, int c, int d, int e){
-        if (turnPlayer.resources[0] < a)
-            return false;
-        if (turnPlayer.resources[1] < b)
-            return false;
-        if (turnPlayer.resources[2] < c)
-            return false;
-        if (turnPlayer.resources[3] < d)
-            return false;
-        if (turnPlayer.resources[4] < e)
-            return false;
-        return true;
-    }
-    boolean checkAmt(BuildingOption Option){
-        switch (Option){
-            case Road: return payCheck(1,0,0,1,0);
-            case Town: return payCheck(1,1,0,1,1);
-            case City: return payCheck(0,2,3,0,0);
-        }
-        return false;
-    }
-    void pay(BuildingOption Option){
-        switch (Option) {
-            case Road -> pay(1,0,0,1,0);
-            case Town -> pay(1,1,0,1,1);
-            case City -> pay(0,2,3,0,0);
-        }
-    }
-    void pay(int a, int b, int c, int d, int e){
-        turnPlayer.resources[0] -= a;
-        turnPlayer.resources[1] -= b;
-        turnPlayer.resources[2] -= c;
-        turnPlayer.resources[3] -= d;
-        turnPlayer.resources[4] -= e;
-    }
+
     void toggleVisible(CardHolder c, boolean val){
         if (c == null)
             return;
@@ -597,26 +464,7 @@ public class Catan {
     void waitMouseRelease(){
         while (Renderer.getMouseButton(GLFW_MOUSE_BUTTON_LEFT) != GLFW_RELEASE);
     }
-    void rob(){
-        while (!victims.isEmpty()) {
-            rob(victims.remove());
-        }
-    }
-    void rob(Player victim){
-        System.out.println("ROBBED "+victim.name);
 
-        toggleVisible(turnPlayer.ResourceCards, false);
-        toggleVisible(victim.ResourceCards, false);
-
-        victim.updateResourcesToCards();
-        if (victim.ResourceCards.Cards.isEmpty())
-            return;
-        victim.ResourceCards.scroll((int) (Math.random() * 200));
-        victim.ResourceCards.select();
-        System.out.println(victim.ResourceCards.current().data);
-
-        trade(victim.ResourceCards);
-    }
     void InstantiateBuildingMeshes(){ // HAS TO RUN ON THE MAIN THREAD
         while (!MeshQueue.isEmpty()) {
             Building b = MeshQueue.remove();
@@ -682,6 +530,8 @@ public class Catan {
         turnPlayer.ResourceCards.select(); // selects current
     }
     void openTradingInventory() {
+        if (turnPlayer.TradingCards.current().data.owner == Bank)
+            Bank.resources = new int[]{5,5,5,5,5};
         openTradingInventory(turnPlayer.TradingCards.current().data);
     }
     void openTradingInventory(CardHolder<NewHex.resource> inv){
@@ -732,7 +582,7 @@ public class Catan {
         try {
             //System.out.println("start build");
             new Thread( () -> {
-                build(Option);
+                Board.build(Option,turnPlayer,this);
             }).start();
 
         } catch (Exception e){}

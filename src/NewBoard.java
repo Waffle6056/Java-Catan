@@ -2,7 +2,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.*;
 import RenderingStuff.Mesh;
-
+import org.joml.Vector3f;
 
 
 public class NewBoard {
@@ -25,6 +25,77 @@ public class NewBoard {
     //(q - 1, r + 1, s)
     //(q - 1, r, s + 1)
     //(q, r - 1, s + 1)
+    boolean build(Catan.BuildingOption Option, Player turnPlayer, Catan instance) {
+        return build(Option, turnPlayer, instance, new Building[1]);
+    }
+    boolean build(Catan.BuildingOption Option, Player turnPlayer, Catan instance, Building[] out) {
+
+        //check if required resource amount
+        // return false if not enought
+        if (!turnPlayer.checkAmt(Option))
+            return false;
+
+        if (Option == Catan.BuildingOption.Town || Option == Catan.BuildingOption.City){
+            if (Option == Catan.BuildingOption.Town && turnPlayer.settlements == 0)
+                return false;
+            if (Option == Catan.BuildingOption.City && turnPlayer.cities == 0)
+                return false;
+
+            instance.waitMouseRelease();
+
+            Vector3f mouseClickPos = instance.waitMouseClick();
+            NewHex hex = instance.selectHex(mouseClickPos);
+            NewHex.HexBuilding ver = instance.selectVertex(hex, mouseClickPos);
+
+            //System.out.println(hex.x + " " + hex.y+" "+ver+" "+hex.buildings[ver.index]);
+            if (hex.constructbuilding(ver, Option, turnPlayer)) {
+                turnPlayer.pay(Option);
+                if (Option == Catan.BuildingOption.City) {
+                    instance.Renderer.removeMesh(hex.buildings[ver.index].mesh);
+                    turnPlayer.settlements++;
+                    turnPlayer.cities--;
+                }
+                else
+                    turnPlayer.settlements--;
+                instance.MeshQueue.add(hex.buildings[ver.index]);
+                //System.out.println("COMPLETED BUILDING "+hex.buildings[ver.index].type);
+                out[0] = hex.buildings[ver.index];
+                return true;
+                //System.out.println("built town/city "+hex.mesh.position+" "+ver);
+            }
+            return false;
+        }
+        else if (Option == Catan.BuildingOption.Road){
+
+            instance.waitMouseRelease();
+
+            Vector3f mouseClickPos1 = instance.waitMouseClick();
+            NewHex hex1 = instance.selectHex(mouseClickPos1);
+            NewHex.HexBuilding ver1 = instance.selectVertex(hex1, mouseClickPos1);
+
+            instance.waitMouseRelease();
+
+            Vector3f mouseClickPos2 = instance.waitMouseClick();
+            NewHex hex2 = instance.selectHex(mouseClickPos2);
+            NewHex.HexBuilding ver2 = instance.selectVertex(hex2, mouseClickPos2);
+
+            //System.out.println(hex1.x+" "+hex1.y+" "+ver1);
+            //System.out.println(hex2.x+" "+hex2.y+" "+ver2);
+
+            Road[] t = new Road[1];
+            if (hex1.constructRoads(ver1, hex2, ver2, Catan.BuildingOption.Road, turnPlayer, t)){
+                instance.MeshQueueRoad.add(t[0]);
+                turnPlayer.pay(Option);
+//                hex1.constructbuilding(ver1, BuildingOption.Road, turnPlayer);
+//                hex2.constructbuilding(ver2, BuildingOption.Road, turnPlayer);
+                return true;
+            }
+            else
+                return false;
+
+        }
+        return false;
+    }
     public void makeDefaltBoard(int Dimesion1,int Dimesion2,int Dimesion3,String tileamounts,String DiceTiles) throws FileNotFoundException {
         Scanner Filetiles=new Scanner(new File(tileamounts));
         Scanner dice=new Scanner(new File(DiceTiles));

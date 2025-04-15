@@ -7,7 +7,7 @@ public class Knight extends DevelopmentCard{
     public String meshFile(){ return "CatanCardMeshes/Development/CardKnight.fbx";}
     @Override
     public void use(Catan instance) {
-        instance.robberThread();
+        instance.robber.startRobbing();
         instance.turnPlayer.army++;
     }
 }

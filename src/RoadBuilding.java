@@ -23,13 +23,14 @@ public class RoadBuilding extends DevelopmentCard{
 
         System.out.println("BUILD A ROAD");
 
-            while (!instance.build(Catan.BuildingOption.Road))
+            while (!instance.Board.build(Catan.BuildingOption.Road,instance.turnPlayer,instance))
                 System.out.println("failed try again");
 
             instance.waitMouseRelease();
         System.out.println("BUILD A ROAD");
 
-            while (!instance.build(Catan.BuildingOption.Road)) System.out.println("failed try again");
+            while (!instance.Board.build(Catan.BuildingOption.Road,instance.turnPlayer,instance))
+                System.out.println("failed try again");
 
     }
 }

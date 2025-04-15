@@ -44,6 +44,7 @@ CardHolder<E> {
     }
     public void remove(Card<E> card){
         Cards.remove(card);
+        card.selected = false;
         CardsSelected.remove(card);
         if (card.mesh != null)
             meshes.remove(card.mesh);
@@ -80,7 +81,7 @@ CardHolder<E> {
         return Cards.get(ind);
     }
     public void select(boolean val){
-        if (val && !current().selected || !val && current().selected)
+        if (!Cards.isEmpty() && (val && !current().selected || !val && current().selected))
             select();
     }
     public void select(){
@@ -137,4 +138,21 @@ CardHolder<E> {
             }
         }
     }
+    public void deselectAll(){
+        for (int i = 0; i < Cards.size(); i++) {
+            scroll(1);
+            select(false);
+        }
+    }
+    public boolean find(E val){
+        for (int i = 0; i < Cards.size(); i++) {
+            if (current().data.equals(val)){
+                select();
+                return true;
+            }
+            scroll(1);
+        }
+        return false;
+    }
+
 }
