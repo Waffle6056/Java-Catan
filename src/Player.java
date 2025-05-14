@@ -10,7 +10,7 @@ public class Player {
     CardHolder<DevelopmentCard> DevelopmentCards = new CardHolder<>(this);
     CardHolder<NewHex.resource> ResourceCards = new CardHolder<>(this);
     CardHolder<CardHolder<NewHex.resource>> TradingCards = new CardHolder<>(this);
-    CardHolder<NewHex.resource> OpenTrade = new CardHolder<>(this);
+    TradeHolder<NewHex.resource> OpenTrade = new TradeHolder<>(this);
     String markFile = "catan.fbx";
     String roadFile = "Buildings/Road.fbx";
     String settlementFile = "Buildings/Settlement.fbx";
@@ -66,16 +66,10 @@ public class Player {
     }
     public void updateResourcesToCards(){
         ResourceCards.clear();
-        String[] fileNames = {
-                "CatanCardMeshes/Resource/CardBrick.fbx",
-                "CatanCardMeshes/Resource/CardGrain.fbx",
-                "CatanCardMeshes/Resource/CardOre.fbx",
-                "CatanCardMeshes/Resource/CardLumber.fbx",
-                "CatanCardMeshes/Resource/CardWool.fbx",
-        };
+        //System.out.println(name+" CARDS UPDATED "+Arrays.toString(resources));
         for (int i = 0; i < resources.length; i++){
             for (int j = 0; j < resources[i]; j++)
-                ResourceCards.add(new Card<>(NewHex.resource.values()[i], fileNames[i]));
+                ResourceCards.add(NewHex.resource.values()[i], NewHex.fileNames[i]);
         }
     }
     public void updateCardsToResources(){

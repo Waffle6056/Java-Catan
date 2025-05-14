@@ -16,7 +16,7 @@ public class Catan {
     NewBoard Board;
     List<Player> players;
     Player turnPlayer;
-    Player Bank;
+    BankHolder<NewHex.resource> Bank;
     int turnInd;
     Mesh cursor, sky, ocean;
     RobberBaron robber;
@@ -64,7 +64,7 @@ public class Catan {
             "Buildings/SettlementThree.fbx",
             "Buildings/SettlementFour.fbx",
     };
-    CardHolder guideElement = new CardHolder(null);
+    GuideHolder guideElement = new GuideHolder(null);
     Mesh die1, die2;
     int roll1, roll2;
     boolean updateDice = false;
@@ -104,7 +104,8 @@ public class Catan {
 
         robber = new RobberBaron(this);
         Renderer.addMesh(robber.mesh);
-
+        Renderer.addMesh2d(robber.meshNotifier);
+        guideElement.build(PlayerCards,this);
         guideElement.position = new Vector3f(0f,-0.2f,0.5f);
         guideElement.len = 0.2f;
         guideElement.add(null, "CatanCardMeshes/Special/BuildingCost.fbx");
@@ -135,10 +136,13 @@ public class Catan {
             players.get(i).settlementFile = SettlementFiles[i];
         }
 
+        Bank = new BankHolder<>(null);
+        for (Card<NewHex.resource> c : BankHolder.defaultInventory(5))
+            Bank.addPermanent(c);
+        for (int j = 0; j < 4; j++)
+            Bank.TradeRequirements.add(new Card<>(NewHex.resource.Desert, "CatanCardMeshes/Special/Arrow.fbx"));
 
-        Bank = new Player("BANK", "CatanCardMeshes/Special/Arrow.fbx");
-        Bank.resources = new int[]{5,5,5,5,5};
-        Bank.updateResourcesToCards();
+
         for (int i = 0; i < playersCount; i++){
             //p.updateResourcesToCards();
             Player p = players.get(i);
@@ -147,7 +151,7 @@ public class Catan {
                 if (p != players.get(j))
                     p.TradingCards.add(b.ResourceCards, b.markFile);
             }
-            p.TradingCards.add(Bank.ResourceCards, Bank.markFile);
+            p.TradingCards.add(Bank, "CatanCardMeshes/Special/Arrow.fbx");
 
             p.updateResourcesToCards();
         }
@@ -226,6 +230,7 @@ public class Catan {
         }
         Renderer.terminate();
     }
+
 
     void nextPlayerTurn(){
         Player.redopoints(players);
@@ -530,44 +535,61 @@ public class Catan {
         turnPlayer.ResourceCards.select(); // selects current
     }
     void openTradingInventory() {
-        if (turnPlayer.TradingCards.current().data.owner == Bank)
-            Bank.resources = new int[]{5,5,5,5,5};
         openTradingInventory(turnPlayer.TradingCards.current().data);
     }
     void openTradingInventory(CardHolder<NewHex.resource> inv){
         ;//start trade or select or confirm idk im not done yet
         toggleVisible(turnPlayer.OpenTrade, false);
         turnPlayer.OpenTrade.clear();
-        inv.owner.updateResourcesToCards();
-        turnPlayer.OpenTrade.addAll(inv);
+        if (inv.owner != null)
+            inv.owner.updateResourcesToCards();
+        if (turnPlayer.OpenTrade.Data != null)
+            turnPlayer.OpenTrade.Data.deselectAll();
+        turnPlayer.OpenTrade.Data = inv;
+        turnPlayer.OpenTrade.addCopyOfAll(inv);
         turnPlayer.OpenTrade.owner = inv.owner;
+
         toggleVisible(turnPlayer.OpenTrade, true);
     }
     void trade(CardHolder<NewHex.resource> inv){
-        boolean a = turnPlayer.ResourceCards.visible, b = inv.visible;
-        if (a)
-            toggleVisible(turnPlayer.ResourceCards);
-        if (b)
-            toggleVisible(inv);
+        if (!turnPlayer.ResourceCards.visible)
+            return;
 
-        turnPlayer.ResourceCards.trade(inv);
+
+        toggleVisible(turnPlayer.ResourceCards, false);
+        boolean a = inv.visible;
+        if (a)
+            toggleVisible(inv, false);
+
+        inv.trade(turnPlayer.ResourceCards);
         turnPlayer.updateCardsToResources();
+        turnPlayer.updateResourcesToCards();
 
         Player other = inv.owner;
-        if (other.ResourceCards != inv) {
-            other.ResourceCards.clear();
-            other.ResourceCards.addAll(inv);
+        if (other != null) {
+            if (other.ResourceCards != inv) {
+                other.ResourceCards.clear();
+                other.ResourceCards.addAll(inv);
+            }
+            other.updateCardsToResources();
         }
-        other.updateCardsToResources();
 
+        toggleVisible(turnPlayer.ResourceCards, true);
         if (a)
-            toggleVisible(turnPlayer.ResourceCards);
-        if (b)
-            toggleVisible(inv);
+            toggleVisible(inv, true);
     }
 
     void tradeCurrentSelectedCards(){
-        trade(turnPlayer.OpenTrade);
+        if (turnPlayer.OpenTrade.Data == null)
+            return;
+        toggleVisible(turnPlayer.OpenTrade, false);
+        toggleVisible(turnPlayer.OpenTrade.Data, false);
+
+        trade(turnPlayer.OpenTrade.Data);
+        openTradingInventory(turnPlayer.OpenTrade.Data);
+
+        toggleVisible(turnPlayer.OpenTrade.Data, false);
+        toggleVisible(turnPlayer.OpenTrade, true);
     }
     private void StartSetUpThread(){
         try {
@@ -579,14 +601,17 @@ public class Catan {
         } catch (Exception e){}
     }
     void startBuildThread(BuildingOption Option){
+        currentPhase = Phase.Rolling;
         try {
             //System.out.println("start build");
             new Thread( () -> {
                 Board.build(Option,turnPlayer,this);
+                currentPhase = Phase.BuildingTrading;
             }).start();
 
         } catch (Exception e){}
     }
+
     public static void main(String[] args) {
         Catan catan = new Catan();
         catan.run();

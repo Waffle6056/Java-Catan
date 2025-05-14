@@ -2,6 +2,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.*;
 import RenderingStuff.Mesh;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 
@@ -60,6 +61,8 @@ public class NewBoard {
                 instance.MeshQueue.add(hex.buildings[ver.index]);
                 //System.out.println("COMPLETED BUILDING "+hex.buildings[ver.index].type);
                 out[0] = hex.buildings[ver.index];
+                if (out[0].ConnectingPort != null)
+                    turnPlayer.TradingCards.add(out[0].ConnectingPort);
                 return true;
                 //System.out.println("built town/city "+hex.mesh.position+" "+ver);
             }
@@ -180,116 +183,115 @@ public class NewBoard {
             numbers.putIfAbsent(i, new ArrayList<>());
         }
 
+        int[] deltaQ = new int[]{-1,-1,0,1,1,0};
+        int[] deltaR = new int[]{1,0,-1,-1,0,1};
+        int[] deltaS = new int[]{0,1,1,0,-1,-1};
         for (int i = 0; i < times; i++) {
-            if (dir==0){
-                if (!vist.contains(encoder(q-1,r+1,s))&& grid.containsKey(encoder(q-1,r+1,s))){
-                    q--;r++;
-                    NewHex temp= grid.get(encoder(q,r,s));
-                    vist.add(encoder(q,r,s));
-                    if (temp.type== NewHex.resource.Desert){
-                        i--;continue;
-                    }
-                    String tes=dice.nextLine();
-                    temp.tostring=tes;
-                    int l= Integer.parseInt(tes.split(" ")[2]);
-                    temp.setDicenumber(l);
-                    numbers.get(l).add(temp);
-                }
-                else {
-                    dir++;i--;
-                }
+            int nQ = q+deltaQ[dir];
+            int nR = r+deltaR[dir];
+            int nS = s+deltaS[dir];
+            while (vist.contains(encoder(nQ,nR,nS)) || !grid.containsKey(encoder(nQ,nR,nS))){
+                dir = (dir+1)%6;
+                nQ = q+deltaQ[dir];
+                nR = r+deltaR[dir];
+                nS = s+deltaS[dir];
             }
-            else if (dir==1){
-                if (!vist.contains(encoder(q-1,r,s+1)) && grid.containsKey(encoder(q-1,r,s+1)   )){
-                    q--;s++;
-                    NewHex temp= grid.get(encoder(q,r,s));
-                    vist.add(encoder(q,r,s));
-                    if (temp.type== NewHex.resource.Desert){
-                        i--;continue;
-                    }
-                    String tes=dice.nextLine();
-                    temp.tostring=tes;
-                    int l= Integer.parseInt(tes.split(" ")[2]);
-                    temp.setDicenumber(l);
-                    numbers.get(l).add(temp);
-                }
-                else {
-                    dir++;i--;
-                }
+            q = nQ;
+            r = nR;
+            s = nS;
+
+
+            NewHex temp= grid.get(encoder(q,r,s));
+            vist.add(encoder(q,r,s));
+            if (temp.type== NewHex.resource.Desert){
+                i--;continue;
             }
-            else if (dir==2){
-                if (!vist.contains(encoder(q,r-1,s+1)) &&grid.containsKey(encoder(q,r-1,s+1))){
-                    r--;s++;
-                    NewHex temp= grid.get(encoder(q,r,s));
-                    vist.add(encoder(q,r,s));
-                    if (temp.type== NewHex.resource.Desert){
-                        i--;continue;
-                    }
-                    String tes=dice.nextLine();
-                    temp.tostring=tes;
-                    int l= Integer.parseInt(tes.split(" ")[2]);
-                    temp.setDicenumber(l);
-                    numbers.get(l).add(temp);
-                }
-                else {
-                    dir++;i--;
-                }
+            String tes=dice.nextLine();
+            temp.tostring=tes;
+            int l= Integer.parseInt(tes.split(" ")[2]);
+            temp.setDicenumber(l);
+            numbers.get(l).add(temp);
+        }
+
+        q = 1; r = -1; s = 0; dir=0;
+        int[] PortSide = new int[]{0,1,-1,1,2,3,-1,3,4,5,-1,5};
+        //int[] PortSide = new int[]{-1,2,-1,1,1,1,1,1,1,1,1,1};
+        for (int i = 0; i < PortSide.length; i++) {
+            int nQ = q + deltaQ[dir];
+            int nR = r + deltaR[dir];
+            int nS = s + deltaS[dir];
+            while (!grid.containsKey(encoder(nQ, nR, nS))) {
+                dir = (dir + 1) % 6;
+                nQ = q + deltaQ[dir];
+                nR = r + deltaR[dir];
+                nS = s + deltaS[dir];
             }
-            else if (dir==3){
-                if (!vist.contains(encoder(q+1,r-1,s)) &&grid.containsKey(encoder(q+1,r-1,s))){
-                    q++;r--;
-                    NewHex temp= grid.get(encoder(q,r,s));
-                    vist.add(encoder(q,r,s));
-                    if (temp.type== NewHex.resource.Desert){
-                        i--;continue;
-                    }
-                    String tes=dice.nextLine();
-                    temp.tostring=tes;
-                    int l= Integer.parseInt(tes.split(" ")[2]);
-                    temp.setDicenumber(l);
-                    numbers.get(l).add(temp);
-                }
-                else {
-                    dir++;i--;
-                }
-            }else if (dir==4){
-                if (!vist.contains(encoder(q+1,r,s-1)) &&grid.containsKey(encoder(q+1,r,s-1))){
-                    q++;s--;
-                    NewHex temp= grid.get(encoder(q,r,s));
-                    vist.add(encoder(q,r,s));
-                    if (temp.type== NewHex.resource.Desert){
-                        i--;continue;
-                    }
-                    String tes=dice.nextLine();
-                    temp.tostring=tes;
-                    int l= Integer.parseInt(tes.split(" ")[2]);
-                    temp.setDicenumber(l);
-                    numbers.get(l).add(temp);
-                }
-                else {
-                    dir++;i--;
-                }
+            q = nQ;
+            r = nR;
+            s = nS;
+
+            if (PortSide[i] == -1)
+                continue;
+            int ind1 = PortSide[i];
+            int ind2 = Math.floorMod(PortSide[i]-1,6);
+            NewHex temp= grid.get(encoder(q,r,s));
+            Building p1 = temp.buildings[ind1];
+            Building p2 = temp.buildings[ind2];
+
+            PortHolder<NewHex.resource> port = PortHolder.generatePort();
+            int fileInd = port.TradeRequirements.get(0).data.index;
+            String cardFile = "";
+            if (fileInd == -1)
+                cardFile = "CatanCardMeshes/Special/Arrow.fbx";
+            else
+                cardFile = NewHex.fileNames[fileInd];
+            Card<CardHolder<NewHex.resource>> card = new Card<>(port, cardFile);
+
+
+
+            p1.ConnectingPort = card;
+            p2.ConnectingPort = card;
+
+            p1.setPos(temp, NewHex.HexBuilding.values()[ind1]);
+            p2.setPos(temp, NewHex.HexBuilding.values()[ind2]);
+
+            Mesh m = new Mesh("Buildings/Port.fbx");
+            m.position.add((p1.x+p2.x)/2,0,(p1.y+p2.y)/2);
+
+            int ind = port.TradeRequirements.size() / 2;
+            int j = 0;
+            for (Card<NewHex.resource> c : port.TradeRequirements) {
+                Mesh req = new Mesh(c.file);
+                req.position.add(m.position).add(0, 2+j*0.05f, 0);
+                req.scale.mul(3);
+                int midDiff = j++-ind;
+                float angle = (float)Math.toRadians(Math.min(180f/port.TradeRequirements.size(), 180f/7f)) * midDiff;
+                req.rotation.rotateY(angle+ (float)Math.toRadians(180f));
+                float len = 0.3f;
+                Vector3f rotated = new Vector3f(0,0,-len).rotateY(angle);
+                req.position.add(rotated);
+                //req.rotation.rotateX((float) Math.toRadians(-90));
+
+                ports.add(req);
             }
-            else if (dir==5){
-                if (!vist.contains(encoder(q,r+1,s-1)) &&grid.containsKey(encoder(q,r+1,s-1))){
-                    r++;s--;
-                    NewHex temp= grid.get(encoder(q,r,s));
-                    vist.add(encoder(q,r,s));
-                    if (temp.type== NewHex.resource.Desert){
-                        i--;continue;
-                    }
-                    String tes=dice.nextLine();
-                    temp.tostring=tes;
-                    int l= Integer.parseInt(tes.split(" ")[2]);
-                    temp.setDicenumber(l);
-                    numbers.get(l).add(temp);
-                }
-                else {
-                    dir=0;i--;
-                }
-            }
+
+
+
+
+            Vector3f v = new Vector3f(-temp.x + m.position.x, temp.y - m.position.z, 0).normalize();
+            //System.out.println(new Vector3f(1,0,0).angleSigned(v,new Vector3f(0,0,1))+" "+v+" ("+temp.x+", "+temp.y+")"+m.position+" "+cardFile);
+            m.rotation.rotateY(new Vector3f(1,0,0).angleSigned(v,new Vector3f(0,0,1)));
+            m.rotation.rotateX((float) Math.toRadians(-90));
+
+            //req.rotation = new Quaternionf(m.rotation);
+
+            ports.add(m);
+
+
+
         }
     }
+    java.util.List<Mesh> ports = new ArrayList<>();
     public String encoder(int q,int r,int s){
         return q+","+r+","+s;
     }
@@ -308,6 +310,7 @@ public class NewBoard {
 //            else
 //                System.out.println("nope ");
         }
+        meshList.addAll(ports);
         return meshList;
     }
     public void paint(Graphics window, double wrat, double hrat ) {

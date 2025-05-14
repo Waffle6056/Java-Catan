@@ -4,8 +4,7 @@ import org.joml.*;
 import javax.swing.text.Position;
 import java.lang.Math;
 import java.util.*;
-public class
-CardHolder<E> {
+public class CardHolder<E> {
     List<Card<E>> Cards = new ArrayList<>();
     int ind = 0;
     List<Card<E>> CardsSelected = new ArrayList<>();
@@ -55,6 +54,7 @@ CardHolder<E> {
         for (int i = cards.size()-1; i >= 0; i--)
             remove(cards.get(i));
     }
+
     public void trade(CardHolder<E> other){
         addAll(other.CardsSelected);
         other.addAll(CardsSelected);
@@ -67,6 +67,10 @@ CardHolder<E> {
         Cards.clear();
         CardsSelected.clear();
         meshes.clear();
+    }
+    public void setInd(int i){
+        ind = i;
+        setPositions();
     }
     public void scroll(int delta){
         if (Cards.size() == 0)

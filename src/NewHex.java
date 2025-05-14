@@ -28,7 +28,13 @@ public class NewHex extends Canvas {
             this.index =l;
         }
     }
-
+    public static String[] fileNames = {
+            "CatanCardMeshes/Resource/CardBrick.fbx",
+            "CatanCardMeshes/Resource/CardGrain.fbx",
+            "CatanCardMeshes/Resource/CardOre.fbx",
+            "CatanCardMeshes/Resource/CardLumber.fbx",
+            "CatanCardMeshes/Resource/CardWool.fbx",
+    };
     Mesh mesh, numberMesh;
     Building[] buildings=new Building[6];
     Road[] roads=new Road[6];
@@ -105,12 +111,41 @@ public class NewHex extends Canvas {
 //    String buildingToString(Building b){
 //        return b.x+" "+b.y;
 //    }
+    public boolean startingCanBuild(Road e) {
+        Building temp = e.left;
+        boolean failed = false;
+        for (int i = 0; i < 3; i++) {
+            if (temp.getRoads()[i] == null) {
+                continue;
+            }
+            Building left = temp.getRoads()[i].left, right = temp.getRoads()[i].right;
+            if (left.type == Catan.BuildingOption.Town || right.type == Catan.BuildingOption.Town) {
+                failed = true;
+                break;
+            }
+        }
+        if (!failed) {
+            return true;
+        }
+        temp = e.right;
+        for (int i = 0; i < 3; i++) {
+            if (temp.getRoads()[i] == null) {
+                continue;
+            }
+            Building left = temp.getRoads()[i].left, right = temp.getRoads()[i].right;
+            if (left.type == Catan.BuildingOption.Town || right.type == Catan.BuildingOption.Town) {
+                return false;
+            }
+        }
+        return true;
+    }
     static boolean ownerRequirementOverride = false;
     public boolean constructRoads(HexBuilding ver1, NewHex hex2, HexBuilding ver2, Catan.BuildingOption option, Player owner, Road[] out){
         Building one=buildings[ver1.index],two=hex2.buildings[ver2.index];
         System.out.println("called build "+option);
         if (one == two)
             return false;
+
         //System.out.println("passed check 2 "+two);
         for (int i = 0; i < 3; i++) {
             Road r = one.getRoads()[i];
@@ -122,7 +157,9 @@ public class NewHex extends Canvas {
             //System.out.println(one.getRoads()[i].left+" "+one.getRoads()[i].right);
             if (r.left.equals(two)||r.right.equals(two)){
                 //System.out.println("passed check 3");
-
+                if (ownerRequirementOverride && !startingCanBuild(r)){
+                    return false;
+                }
                 r.made(owner);
                 r.setPos(this, ver1, hex2, ver2); // mesh pos
                 out[0] = one.getRoads()[i];

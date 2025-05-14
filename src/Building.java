@@ -5,6 +5,7 @@ import org.joml.Math;
 public class Building extends Canvas {
     float x, y;
     Catan.BuildingOption type = Catan.BuildingOption.Road;
+    Card<CardHolder<NewHex.resource>> ConnectingPort = null;
     int resourcegain;
     Player owner;
     boolean inverted;// if Y is upsidedown;

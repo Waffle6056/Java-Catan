@@ -19,18 +19,22 @@ public class RoadBuilding extends DevelopmentCard{
     }
     private void Build(Catan instance){
 
-        Player turnPlayer = instance.turnPlayer;
+        instance.currentPhase = Catan.Phase.Rolling;
 
+        Player turnPlayer = instance.turnPlayer;
+        turnPlayer.resources[0] += 2;
+        turnPlayer.resources[3] += 2;
         System.out.println("BUILD A ROAD");
 
-            while (!instance.Board.build(Catan.BuildingOption.Road,instance.turnPlayer,instance))
+            while (!instance.Board.build(Catan.BuildingOption.Road,turnPlayer,instance))
                 System.out.println("failed try again");
 
             instance.waitMouseRelease();
         System.out.println("BUILD A ROAD");
 
-            while (!instance.Board.build(Catan.BuildingOption.Road,instance.turnPlayer,instance))
+            while (!instance.Board.build(Catan.BuildingOption.Road,turnPlayer,instance))
                 System.out.println("failed try again");
 
+        instance.currentPhase = Catan.Phase.BuildingTrading;
     }
 }
