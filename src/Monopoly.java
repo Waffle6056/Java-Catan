@@ -1,11 +1,3 @@
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL;
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
-
-
-import java.util.Scanner;
-
 public class Monopoly extends DevelopmentCard{
 
     @Override
@@ -13,10 +5,10 @@ public class Monopoly extends DevelopmentCard{
     @Override
     public void use(Catan instance)  {
         Player turnPlayer = instance.turnPlayer;
-        Player bank = new Player();
-        bank.resources = new int[]{1,1,1,1,1};
-        bank.updateResourcesToCards();
-        instance.openTradingInventory(bank.ResourceCards);
+        PortHolder<Hex.resource> port = new PortHolder<>(null);
+        for (Card<Hex.resource> c : PortHolder.defaultInventory(1))
+            port.addPermanent(c);
+        instance.openTradingInventory(port);
         StartBuildThread(instance);
     }
     private void StartBuildThread(Catan instance){
@@ -30,12 +22,14 @@ public class Monopoly extends DevelopmentCard{
     }
     private void Build(Catan instance){
         Player turnPlayer = instance.turnPlayer;
-        NewHex.resource r = instance.selectResource();
-        instance.robber.robAllResource(r);
 
-        instance.toggleVisible(turnPlayer.OpenTrade, false);
+        instance.currentPhase = Catan.Phase.Rolling;
+
+        Hex.resource r = instance.selectResource();
+        instance.robber.robAllResource(r);
         turnPlayer.OpenTrade.clear();
 
+        instance.currentPhase = Catan.Phase.BuildingTrading;
     }
 
 

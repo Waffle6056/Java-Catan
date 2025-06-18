@@ -2,7 +2,6 @@ import RenderingStuff.CatanWindow;
 import RenderingStuff.Mesh;
 import org.joml.*;
 import org.joml.Math;
-import org.lwjgl.opengl.GL;
 
 import java.util.HashMap;
 import java.util.*;
@@ -10,16 +9,43 @@ import java.util.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
-public class Catan {
+public class Catan implements Renderable, Renderable2d{
     int playersCount = 2;
     public CatanWindow Renderer;
-    NewBoard Board;
+    Board Board;
     List<Player> players;
     Player turnPlayer;
-    BankHolder<NewHex.resource> Bank;
+    BankHolder<Hex.resource> Bank;
     int turnInd;
     Mesh cursor, sky, ocean;
     RobberBaron robber;
+    GuideHolder guideElement = new GuideHolder(null);
+    Mesh die1, die2;
+
+    public java.util.List<Mesh> toMesh(){
+        java.util.List<Mesh> meshList = new ArrayList<>();
+        meshList.addAll(Board.toMesh());
+        meshList.addAll(robber.toMesh());
+        if (cursor != null)
+            meshList.add(cursor);
+        if (sky != null)
+            meshList.add(sky);
+        if (ocean != null)
+            meshList.add(ocean);
+        return meshList;
+    }
+    public java.util.List<Mesh> toMesh2d(){
+        java.util.List<Mesh> meshList = new ArrayList<>();
+        meshList.addAll(turnPlayer.toMesh2d());
+        meshList.addAll(robber.toMesh2d());
+        meshList.addAll(guideElement.toMesh2d());
+        if (die1 != null)
+            meshList.add(die1);
+        if (die2 != null)
+            meshList.add(die2);
+
+        return meshList;
+    }
 
 
     enum BuildingOption{
@@ -33,6 +59,7 @@ public class Catan {
     enum Phase{
         SetUp,
         Rolling,
+        Selecting,
         BuildingTrading,
         Nothing,
         Phase(){}
@@ -64,8 +91,6 @@ public class Catan {
             "Buildings/SettlementThree.fbx",
             "Buildings/SettlementFour.fbx",
     };
-    GuideHolder guideElement = new GuideHolder(null);
-    Mesh die1, die2;
     int roll1, roll2;
     boolean updateDice = false;
     Queue<Building> MeshQueue = new LinkedList<>();
@@ -75,36 +100,29 @@ public class Catan {
     public void run(){
         Renderer = new CatanWindow();
         Renderer.run();
-        Board = new NewBoard();
+        Board = new Board();
 
         cursor = new Mesh("CatanCardMeshes/Special/Arrow.fbx");
         //cursor.rotation.rotateX((float)java.lang.Math.toRadians(-90));
         cursor.scale.mul(1f,1f,1f);
-        Renderer.addMesh(cursor);
 
         sky = new Mesh("HexMeshes/SkySphere.fbx");
         sky.rotation.rotateX((float)java.lang.Math.toRadians(-90));
         sky.position.add(1.9555556f,0f,3.288889f);
-        Renderer.addMesh(sky);
 
         ocean = new Mesh("HexMeshes/Ocean.fbx");
         ocean.rotation.rotateX((float)java.lang.Math.toRadians(-90));
         ocean.position.add(1.9555556f,-.3f,3.288889f);
         ocean.scale.mul(10,10,1);
-        Renderer.addMesh(ocean);
 
-        Renderer.addMeshes(Board.getMeshes());
 
         Mesh m = new Mesh("HexMeshes/SkySphere.fbx");
         m.position.add(0,0,0.1f);
         m.scale.mul(0.00005f,0.00005f,0.00005f);
         //m.rotation.lookAlong(m.position,new Vector3f(0,1,0)).rotateLocalX((float) java.lang.Math.toRadians(90));
         //m.rotation.rotateAxis(Math.toRadians(90),1,0,0);
-        Renderer.addMesh2d(m);
 
         robber = new RobberBaron(this);
-        Renderer.addMesh(robber.mesh);
-        Renderer.addMesh2d(robber.meshNotifier);
         guideElement.build(PlayerCards,this);
         guideElement.position = new Vector3f(0f,-0.2f,0.5f);
         guideElement.len = 0.2f;
@@ -116,7 +134,6 @@ public class Catan {
 //        guideElement.add(null, "Numbers/DieFour.fbx");
 //        guideElement.add(null, "Numbers/DieFive.fbx");
 //        guideElement.add(null, "Numbers/DieSix.fbx");
-        Renderer.addMesh2d(m);
 
         bindKeys();
         currentPhase = Phase.SetUp;
@@ -137,10 +154,10 @@ public class Catan {
         }
 
         Bank = new BankHolder<>(null);
-        for (Card<NewHex.resource> c : BankHolder.defaultInventory(5))
+        for (Card<Hex.resource> c : BankHolder.defaultInventory(5))
             Bank.addPermanent(c);
         for (int j = 0; j < 4; j++)
-            Bank.TradeRequirements.add(new Card<>(NewHex.resource.Desert, "CatanCardMeshes/Special/Arrow.fbx"));
+            Bank.TradeRequirements.add(new Card<>(Hex.resource.Desert, "CatanCardMeshes/Special/Arrow.fbx"));
 
 
         for (int i = 0; i < playersCount; i++){
@@ -151,9 +168,14 @@ public class Catan {
                 if (p != players.get(j))
                     p.TradingCards.add(b.ResourceCards, b.markFile);
             }
+            int[] ar = {4,2,0,4,2};
+            for (int j = 0; j < 5; j++) {
+                for (int k = 0; k < ar[j]; k++) {
+                    p.ResourceCards.add(Card.createResourceCard(Hex.resource.values()[j]));
+                }
+            }
             p.TradingCards.add(Bank, "CatanCardMeshes/Special/Arrow.fbx");
 
-            p.updateResourcesToCards();
         }
 
 
@@ -167,7 +189,7 @@ public class Catan {
     private void SetUp(){
 
         //overrides road building requirement because im too lazy to implement a better solution
-        NewHex.ownerRequirementOverride = true;
+        Hex.ownerRequirementOverride = true;
         ArrayList<Building> roundone =new ArrayList<>();
         for (int i = 0; i < players.size()*2; i++) {
             int ind = Math.min(players.size()*2-1-i, i);
@@ -197,7 +219,7 @@ public class Catan {
         for (int i = 0; i < roundone.size(); i++)
             roundone.get(i).resourcegain=1;
 
-        NewHex.ownerRequirementOverride = false;
+        Hex.ownerRequirementOverride = false;
         turnPlayer = players.get(0);
         turnInd = -1;
         nextPlayerTurn();
@@ -224,6 +246,8 @@ public class Catan {
             InstantiateBuildingMeshes();
             robber.rob();
             updateDiceVisual();
+            Renderer.meshes = toMesh();
+            Renderer.meshes2d = toMesh2d();
             Renderer.update(delta);
             //Renderer.getMousePos();
             lastFrame = currentFrame;
@@ -238,13 +262,6 @@ public class Catan {
             System.out.println(turnPlayer.name+" HAS WON!");
             currentPhase = Phase.Nothing;
             return;
-        }
-
-        //turnPlayer.updateCardsToResources();
-        Renderer.removeMeshes2d(turnPlayer.UIElements.getMeshes());
-        for (Card<CardHolder> cardElement : turnPlayer.UIElements.Cards) {
-            CardHolder element = cardElement.data;
-            toggleVisible(element, false);
         }
 
         turnInd = (turnInd+1)%players.size();
@@ -276,28 +293,24 @@ public class Catan {
             if (!justPressed(key))
                 return;
             if (key == GLFW_KEY_GRAVE_ACCENT)
-                toggleVisible(guideElement);
+                guideElement.toggleVisible();
 
             if (currentPhase == Phase.Rolling || currentPhase == Phase.BuildingTrading){
                 if (key == GLFW_KEY_Z)
-                    toggleVisible(turnPlayer.DevelopmentCards);
+                    turnPlayer.DevelopmentCards.toggleVisible();
                 if (key == GLFW_KEY_X) {
-                    if (!turnPlayer.ResourceCards.visible)
-                        turnPlayer.updateResourcesToCards();
-                    toggleVisible(turnPlayer.ResourceCards);
+                    turnPlayer.ResourceCards.toggleVisible();
 
                 }
                 if (key == GLFW_KEY_C) {
-                    toggleVisible(turnPlayer.TradingCards);
+                    turnPlayer.TradingCards.toggleVisible();
                     //  System.out.println(turnPlayer.TradingCards.Cards.size());
                 }
                 if (key == GLFW_KEY_V)
-                    toggleVisible(turnPlayer.OpenTrade);
+                    turnPlayer.OpenTrade.toggleVisible();
 
 
                 if (key == GLFW_KEY_TAB) {
-                    if (turnPlayer.UIElements.visible)
-                        toggleVisible(turnPlayer.UIElements);
                     int lazy = 0;
                     do {
                         turnPlayer.UIElements.select(false);
@@ -305,8 +318,8 @@ public class Catan {
                         turnPlayer.UIElements.select(true);
                         lazy++;
                     } while (!turnPlayer.UIElements.current().data.visible && lazy < 10);
+                    turnPlayer.UIElements.toggleVisible(true);
                     //System.out.println(turnPlayer.UIElements.getMeshes().size());
-                    toggleVisible(turnPlayer.UIElements);
 //                    System.out.println(turnPlayer.UIElements.current().data.current().data);
                 }
                 if (key == GLFW_KEY_E)
@@ -317,7 +330,6 @@ public class Catan {
                     if (turnPlayer.UIElements.current() == null)
                         return;
                     CardHolder c = turnPlayer.UIElements.current().data;
-                    toggleVisible(c);
                     if (c == turnPlayer.ResourceCards && turnPlayer.ResourceCards.current() != null)
                         selectCurrentResourceCard();
                     else if (c == turnPlayer.OpenTrade && turnPlayer.OpenTrade.current() != null)
@@ -326,27 +338,24 @@ public class Catan {
                         useDevelopmentCard();
                     else if (c == turnPlayer.TradingCards && turnPlayer.TradingCards.current() != null)
                         openTradingInventory();
-                    toggleVisible(c);
                 }
             }
 
             if (currentPhase == Phase.BuildingTrading) {
 
                 if (key == GLFW_KEY_1) {
-                    toggleVisible(turnPlayer.ResourceCards, false);
                     startBuildThread(BuildingOption.Road);
                 }
                 if (key == GLFW_KEY_2) {
-                    toggleVisible(turnPlayer.ResourceCards, false);
                     startBuildThread(BuildingOption.Town);
                 }
                 if (key == GLFW_KEY_3) {
-                    toggleVisible(turnPlayer.ResourceCards, false);
                     startBuildThread(BuildingOption.City);
                 }
-                if (key == GLFW_KEY_4 && turnPlayer.payCheck(0, 1, 1, 0, 1)) {
-                    turnPlayer.pay(0, 1, 1, 0, 1);
-                    toggleVisible(turnPlayer.ResourceCards, false);
+//                if (key == GLFW_KEY_4 && turnPlayer.payCheck(0, 1, 1, 0, 1)) {
+//                    turnPlayer.pay(0, 1, 1, 0, 1);
+                if (key == GLFW_KEY_4 && turnPlayer.payCheck(0, 0, 0, 0, 0)) {
+                    turnPlayer.pay(0, 0, 0, 0, 0);
                     DevelopmentCard d = DevelopmentCard.createNew();
                     //System.out.println(d.meshFile);
                     turnPlayer.DevelopmentCards.add(d, d.meshFile());
@@ -356,8 +365,6 @@ public class Catan {
                     tradeCurrentSelectedCards();
 
                 if (key == GLFW_KEY_ENTER) {
-                    toggleVisible(turnPlayer.ResourceCards, false);
-                    turnPlayer.updateResourcesToCards();
                     nextPlayerTurn();
                 }
 
@@ -366,8 +373,9 @@ public class Catan {
         });
     }
 
-    NewHex.resource selectResource(){
-        while (Renderer.getKey(GLFW_KEY_R) != GLFW_PRESS);
+    Hex.resource selectResource(){
+        while (Renderer.getKey(GLFW_KEY_R) == GLFW_PRESS);
+        while (Renderer.getKey(GLFW_KEY_R) != GLFW_PRESS && turnPlayer.OpenTrade.current().data != null);
         return turnPlayer.OpenTrade.current().data;
     }
 
@@ -400,35 +408,13 @@ public class Catan {
         Renderer.addMesh2d(die2);
     }
 
-    void toggleVisible(CardHolder c, boolean val){
-        if (c == null)
-            return;
-        //System.out.println("toggle "+c);
-        c.toggleVisible(val);
-        if (c.visible && val) {
-            Renderer.addMeshes2d(c.getMeshes());
-        }
-        else if (!c.visible && !val)
-            Renderer.removeMeshes2d(c.getMeshes());
-    }
-    void toggleVisible(CardHolder c){
-        if (c == null)
-            return;
-        //System.out.println("toggle "+c);
-        c.toggleVisible();
-        if (c.visible) {
-            Renderer.addMeshes2d(c.getMeshes());
-        }
-        else
-            Renderer.removeMeshes2d(c.getMeshes());
-    }
 
-    NewHex selectHex(Vector3f mousePos){ // selects closest hex
-        HashMap<String , NewHex> grid = Board.grid;
-        NewHex closest = grid.get(Board.encoder(0,0,0));
+    Hex selectHex(Vector3f mousePos){ // selects closest hex
+        HashMap<String , Hex> grid = Board.grid;
+        Hex closest = grid.get(Board.encoder(0,0,0));
         float oDis = Float.MAX_VALUE;
         for (String k : grid.keySet()){
-            NewHex current = grid.get(k);
+            Hex current = grid.get(k);
             Vector3f cPos = current.mesh.position;
             float cDis = cPos.distance(mousePos);
             if (cDis < oDis){
@@ -438,7 +424,7 @@ public class Catan {
         }
         return closest;
     }
-    NewHex.HexBuilding selectVertex(NewHex hex, Vector3f mousePos){
+    Hex.HexBuilding selectVertex(Hex hex, Vector3f mousePos){
         Vector3f base = new Vector3f(0,0,-1);
         Vector3f axis = base.cross(new Vector3f(1,0,0),new Vector3f());
         Vector3f pos = hex.mesh.position;
@@ -458,7 +444,7 @@ public class Catan {
             base.rotateAxis(Math.toRadians(360/verts),axis.x,axis.y,axis.z);
         }
 
-        return NewHex.HexBuilding.values()[out];
+        return Hex.HexBuilding.values()[out];
     }
     Vector3f waitMouseClick(){
         while (Renderer.getMouseButton(GLFW_MOUSE_BUTTON_LEFT) != GLFW_PRESS);
@@ -485,7 +471,6 @@ public class Catan {
             m.position.add(b.x,0,b.y);
             m.rotation.rotateX(Math.toRadians(-90));
             b.mesh = m;
-            Renderer.addMesh(m);
         }
         while (!MeshQueueRoad.isEmpty()) {
             Road b = MeshQueueRoad.remove();
@@ -495,7 +480,6 @@ public class Catan {
             m.rotation.rotateX(Math.toRadians(-90));
             m.rotation.rotateZ(Math.toRadians(b.angle+90));
             b.mesh = m;
-            Renderer.addMesh(m);
         }
     }
     HashSet<Integer> pressed = new HashSet<>();
@@ -524,9 +508,7 @@ public class Catan {
         turnPlayer.DevelopmentCards.current().data.use(this); // uses current development card;
 
         //Renderer.meshes2d.remove()
-        toggleVisible(turnPlayer.DevelopmentCards, false);
         turnPlayer.DevelopmentCards.remove(turnPlayer.DevelopmentCards.current());
-        toggleVisible(turnPlayer.DevelopmentCards, true);
     }
     void selectCurrentTradeCard(){
         turnPlayer.OpenTrade.select(); // selects current
@@ -537,59 +519,35 @@ public class Catan {
     void openTradingInventory() {
         openTradingInventory(turnPlayer.TradingCards.current().data);
     }
-    void openTradingInventory(CardHolder<NewHex.resource> inv){
+    void openTradingInventory(CardHolder<Hex.resource> inv){
         ;//start trade or select or confirm idk im not done yet
-        toggleVisible(turnPlayer.OpenTrade, false);
         turnPlayer.OpenTrade.clear();
-        if (inv.owner != null)
-            inv.owner.updateResourcesToCards();
         if (turnPlayer.OpenTrade.Data != null)
             turnPlayer.OpenTrade.Data.deselectAll();
         turnPlayer.OpenTrade.Data = inv;
         turnPlayer.OpenTrade.addCopyOfAll(inv);
         turnPlayer.OpenTrade.owner = inv.owner;
-
-        toggleVisible(turnPlayer.OpenTrade, true);
+        turnPlayer.OpenTrade.toggleVisible(true);
     }
-    void trade(CardHolder<NewHex.resource> inv){
+    void trade(CardHolder<Hex.resource> inv){
         if (!turnPlayer.ResourceCards.visible)
             return;
-
-
-        toggleVisible(turnPlayer.ResourceCards, false);
-        boolean a = inv.visible;
-        if (a)
-            toggleVisible(inv, false);
-
         inv.trade(turnPlayer.ResourceCards);
-        turnPlayer.updateCardsToResources();
-        turnPlayer.updateResourcesToCards();
-
         Player other = inv.owner;
         if (other != null) {
             if (other.ResourceCards != inv) {
                 other.ResourceCards.clear();
                 other.ResourceCards.addAll(inv);
             }
-            other.updateCardsToResources();
         }
 
-        toggleVisible(turnPlayer.ResourceCards, true);
-        if (a)
-            toggleVisible(inv, true);
     }
 
     void tradeCurrentSelectedCards(){
         if (turnPlayer.OpenTrade.Data == null)
             return;
-        toggleVisible(turnPlayer.OpenTrade, false);
-        toggleVisible(turnPlayer.OpenTrade.Data, false);
-
         trade(turnPlayer.OpenTrade.Data);
         openTradingInventory(turnPlayer.OpenTrade.Data);
-
-        toggleVisible(turnPlayer.OpenTrade.Data, false);
-        toggleVisible(turnPlayer.OpenTrade, true);
     }
     private void StartSetUpThread(){
         try {

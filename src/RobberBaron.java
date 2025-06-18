@@ -2,11 +2,9 @@ import RenderingStuff.Mesh;
 import org.joml.Math;
 import org.joml.Vector3f;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
-public class RobberBaron {
+public class RobberBaron implements Renderable, Renderable2d{
     public Catan instance;
     public Mesh mesh;
     public Mesh meshNotifier;
@@ -31,8 +29,8 @@ public class RobberBaron {
                 instance.waitMouseRelease();
 
                 Vector3f mouseClickPos = instance.waitMouseClick();
-                NewHex hex = instance.selectHex(mouseClickPos);
-                while (NewHex.isRobberBaroned == hex) {
+                Hex hex = instance.selectHex(mouseClickPos);
+                while (Hex.isRobberBaroned == hex) {
                     System.out.println("ROBBER MUST MOVE TO A DIFFERENT HEX");
                     instance.waitMouseRelease();
                     mouseClickPos = instance.waitMouseClick();
@@ -41,7 +39,7 @@ public class RobberBaron {
                 }
                 meshNotifier.position.add(0f,0f,-4f);
                 //assign is RobberBaron
-                NewHex.isRobberBaroned = hex;
+                Hex.isRobberBaroned = hex;
                 mesh.position = new Vector3f(hex.mesh.position.x, 2.75f, hex.mesh.position.z);
                 HashSet<Player> visited = new HashSet<>();
                 //Steal from near Player
@@ -53,7 +51,6 @@ public class RobberBaron {
                         visited.add(victim);
                         victims.add(victim);
                     }
-                instance.toggleVisible(instance.turnPlayer.OpenTrade, false);
                 instance.turnPlayer.OpenTrade.clear();
                 if (instance.currentPhase == Catan.Phase.Rolling)
                     instance.currentPhase = Catan.Phase.BuildingTrading;
@@ -61,13 +58,12 @@ public class RobberBaron {
 
         } catch (Exception e){}
     }
-    public void robAllResource(NewHex.resource r){
+    public void robAllResource(Hex.resource r){
         for (Player victim : instance.players) {
+            if (victim == instance.turnPlayer)
+                continue;
 
             System.out.println("ROBBED "+victim.name);
-
-            instance.toggleVisible(instance.turnPlayer.ResourceCards, false);
-            instance.toggleVisible(victim.ResourceCards, false);
 
             instance.turnPlayer.ResourceCards.deselectAll();
             victim.ResourceCards.deselectAll();
@@ -75,7 +71,7 @@ public class RobberBaron {
                 return;
 
 
-            if (!victim.ResourceCards.find(r))
+            if (!victim.ResourceCards.selectAllEqual(r))
                 continue;
 
             System.out.println(victim.ResourceCards.current().data);
@@ -95,11 +91,6 @@ public class RobberBaron {
         if (instance.turnPlayer.OpenTrade.owner == victim)
             instance.turnPlayer.OpenTrade.clear();
 
-        instance.toggleVisible(instance.turnPlayer.ResourceCards, false);
-
-        instance.turnPlayer.updateResourcesToCards();
-        victim.updateResourcesToCards();
-
         if (victim.ResourceCards.Cards.isEmpty())
             return;
         victim.ResourceCards.scroll((int) (Math.random() * 200));
@@ -107,5 +98,20 @@ public class RobberBaron {
         System.out.println(victim.ResourceCards.current().data);
 
         instance.trade(victim.ResourceCards);
+    }
+
+    @Override
+    public List<Mesh> toMesh() {
+        java.util.List<Mesh> meshList = new ArrayList<>();
+        if (mesh != null)
+            meshList.add(mesh);
+        return meshList;
+    }
+    @Override
+    public java.util.List<Mesh> toMesh2d() {
+        java.util.List<Mesh> meshList = new ArrayList<>();
+        if (meshNotifier != null)
+            meshList.add(meshNotifier);
+        return meshList;
     }
 }

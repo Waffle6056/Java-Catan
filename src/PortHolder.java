@@ -25,37 +25,37 @@ public class PortHolder<E> extends CardHolder<E>{
         ;
     }
 
-    static ArrayList<Card<NewHex.resource>> defaultInventory(int cnt){
-        ArrayList<Card<NewHex.resource>> out = new ArrayList<>();
+    static ArrayList<Card<Hex.resource>> defaultInventory(int cnt){
+        ArrayList<Card<Hex.resource>> out = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < cnt; j++) {
-                out.add(new Card<>(NewHex.resource.values()[i], NewHex.fileNames[i]));
+                out.add(Card.createResourceCard(Hex.resource.values()[i]));
             }
         }
         return out;
     }
-    static ArrayList<PortHolder<NewHex.resource>> Ports = new ArrayList<>();
-    public static PortHolder<NewHex.resource> generatePort(){
+    static ArrayList<PortHolder<Hex.resource>> Ports = new ArrayList<>();
+    public static PortHolder<Hex.resource> generatePort(){
         if (Ports.size() > 0)
             return Ports.remove(0);
 
 
         for (int i = 0; i < 5; i++) {
-            PortHolder<NewHex.resource> port = new PortHolder<>(null);
-            for (Card<NewHex.resource> c : PortHolder.defaultInventory(5))
+            PortHolder<Hex.resource> port = new PortHolder<>(null);
+            for (Card<Hex.resource> c : PortHolder.defaultInventory(5))
                 port.addPermanent(c);
             for (int j = 0; j < 2; j++) {
-                port.TradeRequirements.add(new Card<>(NewHex.resource.values()[i], NewHex.fileNames[i]));
+                port.TradeRequirements.add(new Card<>(Hex.resource.values()[i], Hex.resourceFileNames[i]));
             }
             Ports.add((int)(Math.random()*Ports.size()), port);
         }
 
         for (int i = 0; i < 4; i++) {
-            BankHolder<NewHex.resource> port = new BankHolder<>(null);
-            for (Card<NewHex.resource> c : PortHolder.defaultInventory(5))
+            BankHolder<Hex.resource> port = new BankHolder<>(null);
+            for (Card<Hex.resource> c : PortHolder.defaultInventory(5))
                 port.addPermanent(c);
             for (int j = 0; j < 3; j++) {
-                port.TradeRequirements.add(new Card<>(NewHex.resource.Desert, "CatanCardMeshes/Special/Arrow.fbx"));
+                port.TradeRequirements.add(new Card<>(Hex.resource.Desert, "CatanCardMeshes/Special/Arrow.fbx"));
             }
             Ports.add((int)(Math.random()*Ports.size()), port);
         }

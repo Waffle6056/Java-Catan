@@ -1,9 +1,18 @@
 import RenderingStuff.Mesh;
 import org.joml.Math;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-public class Road {
+public class Road implements Renderable {
+    @Override
+    public List<Mesh> toMesh() {
+        java.util.List<Mesh> meshList = new ArrayList<>();
+        if (mesh != null)
+            meshList.add(mesh);
+        return meshList;
+    }
     Player owner;
     Road[] connects=new Road[4];
     Building left, right;
@@ -56,7 +65,7 @@ public class Road {
         }
 
     }
-    public void setPos(NewHex hex1, NewHex.HexBuilding ver1, NewHex hex2, NewHex.HexBuilding ver2){
+    public void setPos(Hex hex1, Hex.HexBuilding ver1, Hex hex2, Hex.HexBuilding ver2){
         float radius = 1.2f;// arbitrary value temp
         float indexOffset = 3f;
 

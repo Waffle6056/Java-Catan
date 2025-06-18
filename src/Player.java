@@ -3,14 +3,22 @@ import org.joml.Vector3f;
 
 import java.util.*;
 
-public class Player {
-    int[] resources =new int[]{4, 2, 0, 4, 2};
+public class Player implements Renderable2d {
+    public java.util.List<Mesh> toMesh2d() {
+        java.util.List<Mesh> meshList = new ArrayList<>();
+        meshList.addAll(UIElements.toMesh2d());
+        meshList.addAll(DevelopmentCards.toMesh2d());
+        meshList.addAll(ResourceCards.toMesh2d());
+        meshList.addAll(TradingCards.toMesh2d());
+        meshList.addAll(OpenTrade.toMesh2d());
+        return meshList;
+    }
     String name;
     CardHolder<CardHolder> UIElements = new CardHolder<>(this);
     CardHolder<DevelopmentCard> DevelopmentCards = new CardHolder<>(this);
-    CardHolder<NewHex.resource> ResourceCards = new CardHolder<>(this);
-    CardHolder<CardHolder<NewHex.resource>> TradingCards = new CardHolder<>(this);
-    TradeHolder<NewHex.resource> OpenTrade = new TradeHolder<>(this);
+    CardHolder<Hex.resource> ResourceCards = new CardHolder<>(this);
+    CardHolder<CardHolder<Hex.resource>> TradingCards = new CardHolder<>(this);
+    TradeHolder<Hex.resource> OpenTrade = new TradeHolder<>(this);
     String markFile = "catan.fbx";
     String roadFile = "Buildings/Road.fbx";
     String settlementFile = "Buildings/Settlement.fbx";
@@ -61,22 +69,7 @@ public class Player {
         return 10<=(vp+(this == mason?2:0)+(this == baron?2:0));
     }
 
-    public int[] getResources(){
-        return resources;
-    }
-    public void updateResourcesToCards(){
-        ResourceCards.clear();
-        //System.out.println(name+" CARDS UPDATED "+Arrays.toString(resources));
-        for (int i = 0; i < resources.length; i++){
-            for (int j = 0; j < resources[i]; j++)
-                ResourceCards.add(NewHex.resource.values()[i], NewHex.fileNames[i]);
-        }
-    }
-    public void updateCardsToResources(){
-        Arrays.fill(resources,0);
-        for (Card<NewHex.resource> card : ResourceCards.Cards)
-            resources[card.data.index]++;
-    }
+
     //return null if no player has won;
     public static void redopoints(List<Player> players) {//TODO call at end turn
         for (int i = 0; i < players.size(); i++) {
@@ -91,15 +84,15 @@ public class Player {
         }
     }
     boolean payCheck(int a, int b, int c, int d, int e){
-        if (resources[0] < a)
+        if (ResourceCards.count(Hex.resource.values()[0]) < a)
             return false;
-        if (resources[1] < b)
+        if (ResourceCards.count(Hex.resource.values()[1]) < b)
             return false;
-        if (resources[2] < c)
+        if (ResourceCards.count(Hex.resource.values()[2]) < c)
             return false;
-        if (resources[3] < d)
+        if (ResourceCards.count(Hex.resource.values()[3]) < d)
             return false;
-        if (resources[4] < e)
+        if (ResourceCards.count(Hex.resource.values()[4]) < e)
             return false;
         return true;
     }
@@ -119,11 +112,9 @@ public class Player {
         }
     }
     void pay(int a, int b, int c, int d, int e){
-        resources[0] -= a;
-        resources[1] -= b;
-        resources[2] -= c;
-        resources[3] -= d;
-        resources[4] -= e;
-
+        int[] ar = {a,b,c,d,e};
+        for (int i = 0; i < 5; i++)
+            for (int j = 0; j < ar[i]; j++)
+                ResourceCards.remove(Hex.resource.values()[i]);
     }
 }

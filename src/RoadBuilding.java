@@ -1,5 +1,3 @@
-import org.joml.Math;
-
 public class RoadBuilding extends DevelopmentCard{
 
     @Override
@@ -22,8 +20,10 @@ public class RoadBuilding extends DevelopmentCard{
         instance.currentPhase = Catan.Phase.Rolling;
 
         Player turnPlayer = instance.turnPlayer;
-        turnPlayer.resources[0] += 2;
-        turnPlayer.resources[3] += 2;
+        for (int i = 0; i < 2; i++) {
+            turnPlayer.ResourceCards.add(Hex.resource.Brick);
+            turnPlayer.ResourceCards.add(Hex.resource.Wood);
+        }
         System.out.println("BUILD A ROAD");
 
             while (!instance.Board.build(Catan.BuildingOption.Road,turnPlayer,instance))

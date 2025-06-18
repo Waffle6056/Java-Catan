@@ -5,9 +5,9 @@ public class YearOfPlenty extends DevelopmentCard{
     @Override
     public void use(Catan instance) {
         System.out.println("TAKE 2 RESOURCE CARDS FROM TEMPORARY TRADE INVENTORY");
-        Player bank = new Player();
-        bank.resources = new int[]{2,2,2,2,2};
-        bank.updateResourcesToCards();
-        instance.openTradingInventory(bank.ResourceCards);
+        PortHolder<Hex.resource> port = new PortHolder<>(null);
+        for (Card<Hex.resource> c : PortHolder.defaultInventory(2))
+            port.addPermanent(c);
+        instance.openTradingInventory(port);
     }
 }

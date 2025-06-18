@@ -1,11 +1,14 @@
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import RenderingStuff.Mesh;
 import org.joml.Math;
 
-public class Building extends Canvas {
+public class Building extends Canvas implements Renderable {
     float x, y;
     Catan.BuildingOption type = Catan.BuildingOption.Road;
-    Card<CardHolder<NewHex.resource>> ConnectingPort = null;
+    Card<CardHolder<Hex.resource>> ConnectingPort = null;
     int resourcegain;
     Player owner;
     boolean inverted;// if Y is upsidedown;
@@ -18,10 +21,10 @@ public class Building extends Canvas {
         owner=null;
         this.inverted=false;
     }
-    public void gather(NewHex.resource type){
+    public void gather(Hex.resource type){
         //pre condition type!=desert
         if (owner!=null){
-            owner.resources[type.index]+=resourcegain;
+            owner.ResourceCards.add(Card.createResourceCard(type));
         }
         //check resource and owner exists
 
@@ -31,7 +34,7 @@ public class Building extends Canvas {
 //        if (upleft!=null) upleft.connect(this);
 //        if (upright!=null) upright.connect(this);
 //    }
-    public void setPos(NewHex hex, NewHex.HexBuilding ver){
+    public void setPos(Hex hex, Hex.HexBuilding ver){
         float radius = 1.2f;// arbitrary value temp
         float indexOffset = 3f;
         //float angleOffset = 30f;
@@ -62,6 +65,13 @@ public class Building extends Canvas {
 
     public void paint(Graphics window, int x, int y, int size) {
         window.drawRect(x-size/2,y-size/2,size,size);
+    }
+    @Override
+    public List<Mesh> toMesh() {
+        java.util.List<Mesh> meshList = new ArrayList<>();
+        if (mesh != null)
+            meshList.add(mesh);
+        return meshList;
     }
 
 }

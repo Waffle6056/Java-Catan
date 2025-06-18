@@ -25,7 +25,7 @@ public class CatanWindow {
     public Shader shader;
     public Camera camera = new Camera();
     int width = 1600, height = 1000;
-    List<Mesh> meshes = new ArrayList<>();
+    public List<Mesh> meshes = new ArrayList<>();
     public List<Mesh> meshes2d = new ArrayList<>();
     Matrix4f projection; Matrix4f view2d = new Matrix4f().identity().lookAt(new Vector3f(0,0,0),new Vector3f(0,0,1), new Vector3f(0,1,0));
     public void run() {

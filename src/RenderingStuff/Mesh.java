@@ -10,6 +10,8 @@ import org.lwjgl.assimp.Assimp;
 import java.util.*;
 
 public class Mesh {
+    static HashMap<String, List<VertexCollection>> vcMap = new HashMap<>();
+    static HashMap<String, List<Material>> matMap = new HashMap<>();
     List<VertexCollection> pieces = new ArrayList<>();
     public List<Material> materials = new ArrayList<>();
     public Vector3f position = new Vector3f(0,0,0);
@@ -18,8 +20,18 @@ public class Mesh {
     public Mesh(String filePath){
         importData(filePath);
     }
+    public Mesh(String filePath, Vector3f position, Quaternionf rotation, Vector3f scale){
+        importData(filePath);
+    }
 
     void importData(String filePath){
+        if (vcMap.containsKey(filePath)) {
+            pieces = vcMap.get(filePath);
+            materials = matMap.get(filePath);
+            //System.out.println("working import skip");
+            return;
+        }
+
         AIScene scene = Assimp.aiImportFile(filePath, Assimp.aiProcess_JoinIdenticalVertices | Assimp.aiProcess_Triangulate);
 
         if (scene == null) System.err.println("Couldn't load model at " + filePath +" "+Assimp.aiGetErrorString());
@@ -29,6 +41,9 @@ public class Mesh {
 
         for (int i = 0; i < scene.mNumMeshes(); i++)
             pieces.add(new VertexCollection(AIMesh.create(scene.mMeshes().get(i))));
+
+        vcMap.put(filePath, pieces);
+        matMap.put(filePath, materials);
 
     }
     public void draw(Shader shader){
