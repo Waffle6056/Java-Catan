@@ -112,8 +112,9 @@ public class Shader {
         glDeleteShader(fragmentShader);
 
 
+        setUniform("model",new Matrix4f().identity());
         glUniform3f(glGetUniformLocation(shaderProgram,"light.pos"),1.9555556f,2f,3.288889f);
-        glUniform3f(glGetUniformLocation(shaderProgram,"light.ambient"),0.5f,0.5f,0.5f);
+        glUniform3f(glGetUniformLocation(shaderProgram,"light.ambient"),0.8f,0.8f,0.8f);
         glUniform3f(glGetUniformLocation(shaderProgram,"light.diffuse"),0.7f,0.7f,0.7f);
         glUniform3f(glGetUniformLocation(shaderProgram,"light.specular"),0.5f,0.5f,0.5f);
 //

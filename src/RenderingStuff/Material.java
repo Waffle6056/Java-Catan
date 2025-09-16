@@ -65,6 +65,9 @@ public class Material {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseBuffer);
     }
+
+    // this is someone elses code i was looking at
+
 //    private static void processMaterial(AIMaterial aiMaterial, String modelDir) {
 //        try (MemoryStack stack = MemoryStack.stackPush()) {
 //            AIColor4D color = AIColor4D.create();

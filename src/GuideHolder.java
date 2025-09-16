@@ -26,7 +26,7 @@ public class GuideHolder<E> extends CardHolder<E>{
         // Cards.get(1).selected=true;
     }
 
-    public void setPositions(){
+    public void setTransforms(){
         for (int i = 0; i < Cards.size(); i++) {
             if (Cards.get(i).mesh != null) {
                 Vector3f c = new Vector3f(position);

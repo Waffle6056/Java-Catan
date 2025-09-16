@@ -92,6 +92,9 @@ public class VertexCollection {
         glDrawElements(GL_TRIANGLES,elementData.length,GL_UNSIGNED_INT,0);
     }
 
+    public boolean rayIntersects(Vector3f position, Vector3f ray){ // TODO
+        return false;
+    }
 
 
 }

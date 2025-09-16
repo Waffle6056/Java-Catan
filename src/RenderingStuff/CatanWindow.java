@@ -21,13 +21,13 @@ import java.util.*;
 public class CatanWindow {
 
     // The window handle
-    private long window;
+    public long window;
     public Shader shader;
-    public Camera camera = new Camera();
     int width = 1600, height = 1000;
+    public Camera camera;
+    public Camera camera2d;
     public List<Mesh> meshes = new ArrayList<>();
     public List<Mesh> meshes2d = new ArrayList<>();
-    Matrix4f projection; Matrix4f view2d = new Matrix4f().identity().lookAt(new Vector3f(0,0,0),new Vector3f(0,0,1), new Vector3f(0,1,0));
     public void run() {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
 
@@ -41,11 +41,6 @@ public class CatanWindow {
         GL.createCapabilities();
         shader = new Shader();
         glViewport(0,0,width,height);
-        glfwSetFramebufferSizeCallback(window,(window, width, height)-> {
-            glViewport(0,0,width,height);
-            this.width = width;
-            this.height = height;
-        });
 
         initializeCamera();
         glEnable(GL_DEPTH_TEST);
@@ -72,7 +67,8 @@ public class CatanWindow {
         for (Mesh mesh : meshes)
             mesh.draw(shader);
 
-        shader.setUniform("view", view2d);
+        //System.out.println(camera2d.camPos);
+        camera2d.update(window, shader, delta);
         for (Mesh mesh : meshes2d)
             mesh.draw(shader);
 
@@ -144,20 +140,43 @@ public class CatanWindow {
     }
 
     void initializeCamera(){
-        projection = new Matrix4f().perspective((float)java.lang.Math.toRadians(45), (float) width/height,0.1f,100f);
-        shader.setUniform("projection",projection);
-        Matrix4f model = new Matrix4f().identity();
-        shader.setUniform("model",model);
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        camera.createCallBacks(window);
+        //projection = new Matrix4f().perspective((float)java.lang.Math.toRadians(45), (float) width/height,0.1f,100f);
+        //projection = new Matrix4f().ortho(-width*camera.sensitivity/2, width*camera.sensitivity/2, -height*camera.sensitivity/2, height*camera.sensitivity/2, .1f, 100f);
+        //
+        camera = new Camera();
+        camera.setPerspectiveProjection((float)width/height);
+        camera.rotate(270,-89.99);
+        camera.camPos.add(0,6,0);
+        camera2d = new Camera();
+        camera2d.setOrthoProjection((float)width/height);
+        camera2d.sensitivity = 0;
+        camera2d.scrollSensitivity = 0;
+        glfwSetFramebufferSizeCallback(window,(window, width, height)-> {
+            glViewport(0,0,width,height);
+            this.width = width;
+            this.height = height;
+            camera.setPerspectiveProjection((float)width/height);
+            camera2d.setOrthoProjection((float)width/height);
+        });
+        //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
     // the only collision in the scene will be the xz plane
     public Vector3f getMousePos(){
-        float res = Intersectionf.intersectRayPlane(camera.camPos, camera.camDir, new Vector3f(0,1,0), new Vector3f(0,1,0),camera.epsilon);
-        Vector3f out = new Vector3f(camera.camPos).add(camera.camDir.mul(res, new Vector3f()));
+        Vector3f camPos = camera.camPos;
+        Vector3f dir = camera.getMouseVector(this).normalize();
+
+        float res = Intersectionf.intersectRayPlane(camPos, dir, new Vector3f(0,1,0), new Vector3f(0,1,0),camera.epsilon);
+        Vector3f out = new Vector3f(camPos).add(dir.mul(res, new Vector3f()));
         //System.out.println(res+" "+out);
         return out;
+    }
+    public Vector3f getMousePos2d(){
+        Vector3f camPos = camera2d.camPos;
+        Vector3f dir = camera2d.getMouseVector(this);
+        //System.out.println(camPos+" "+dir);
+        //System.out.println(res+" "+out);
+        return camPos.add(dir, new Vector3f());
     }
 
 
@@ -168,26 +187,35 @@ public class CatanWindow {
     public void bindCallback(GLFWKeyCallbackI cb){
         glfwSetKeyCallback(window, cb);
     }
+    public void bindMouseCallback(GLFWMouseButtonCallbackI cb){
+        glfwSetMouseButtonCallback(window, cb);
+    }
+    public void bindCursorPosCallback(GLFWCursorPosCallbackI cb){
+        glfwSetCursorPosCallback(window, cb);
+    }
+    public void bindScrollCallback(GLFWScrollCallbackI cb){
+        glfwSetScrollCallback(window, cb);
+    }
     public int getKey(int key){
         return glfwGetKey(window, key);
     }
 
     public int getMouseButton(int button){return glfwGetMouseButton(window, button);}
-    public void removeMesh(Mesh mesh){meshes.remove(mesh);}
-    public void removeMeshes(List<Mesh> meshes){
-        this.meshes.removeAll(meshes);
-    }
-    public void addMesh(Mesh mesh){meshes.add(mesh);}
-    public void addMeshes(List<Mesh> meshes){
-        this.meshes.addAll(meshes);
-    }
-    public void addMesh2d(Mesh mesh){meshes2d.add(mesh);}
-    public void addMeshes2d(List<Mesh> meshes){
-        this.meshes2d.addAll(meshes);
-    }
-
-    public void removeMesh2d(Mesh mesh){meshes2d.remove(mesh);}
-    public void removeMeshes2d(List<Mesh> meshes){
-        this.meshes2d.removeAll(meshes);
-    }
+//    public void removeMesh(Mesh mesh){meshes.remove(mesh);}
+//    public void removeMeshes(List<Mesh> meshes){
+//        this.meshes.removeAll(meshes);
+//    }
+//    public void addMesh(Mesh mesh){meshes.add(mesh);}
+//    public void addMeshes(List<Mesh> meshes){
+//        this.meshes.addAll(meshes);
+//    }
+//    public void addMesh2d(Mesh mesh){meshes2d.add(mesh);}
+//    public void addMeshes2d(List<Mesh> meshes){
+//        this.meshes2d.addAll(meshes);
+//    }
+//
+//    public void removeMesh2d(Mesh mesh){meshes2d.remove(mesh);}
+//    public void removeMeshes2d(List<Mesh> meshes){
+//        this.meshes2d.removeAll(meshes);
+//    }
 }

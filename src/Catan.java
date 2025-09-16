@@ -28,8 +28,8 @@ public class Catan implements Renderable, Renderable2d{
         meshList.addAll(robber.toMesh());
         if (cursor != null)
             meshList.add(cursor);
-        if (sky != null)
-            meshList.add(sky);
+//        if (sky != null)
+//            meshList.add(sky);
         if (ocean != null)
             meshList.add(ocean);
         return meshList;
@@ -124,7 +124,7 @@ public class Catan implements Renderable, Renderable2d{
 
         robber = new RobberBaron(this);
         guideElement.build(PlayerCards,this);
-        guideElement.position = new Vector3f(0f,-0.2f,0.5f);
+        guideElement.position = new Vector3f(0f,-0.2f,1f);
         guideElement.len = 0.2f;
         guideElement.add(null, "CatanCardMeshes/Special/BuildingCost.fbx");
         guideElement.add(null, "CatanCardMeshes/Special/Controls.fbx");
@@ -248,6 +248,7 @@ public class Catan implements Renderable, Renderable2d{
             updateDiceVisual();
             Renderer.meshes = toMesh();
             Renderer.meshes2d = toMesh2d();
+
             Renderer.update(delta);
             //Renderer.getMousePos();
             lastFrame = currentFrame;
@@ -288,7 +289,65 @@ public class Catan implements Renderable, Renderable2d{
         else
             currentPhase = Phase.BuildingTrading;
     }
+    double acuYPos = 0;
+    void MouseWheelBinds(long win, double xpos, double ypos){
+        //System.out.println(ypos);
+        if (hovered != null) {
+            acuYPos += ypos;
+            hovered.scroll((int) (acuYPos) / 2);
+            acuYPos %= 2;
+        }
+        else
+            Renderer.camera.scrollMovement(win,xpos,ypos);
+    }
+    void CursorMovementBinds(long win, double xpos, double ypos){
+        UpdatedHoveredElement(win,xpos,ypos);
+        Renderer.camera.cursorMovement(win,xpos,ypos);
+    }
+    void UpdatedHoveredElement(long win, double xpos, double ypos){
+        Vector3f pos = Renderer.getMousePos2d();
+        pos.z = 0;
+        float minDistance = Float.MAX_VALUE;
+        CardHolder currentElement = null;
+        for (Card<CardHolder> c : turnPlayer.UIElements.Cards){
+            CardHolder d = c.data;
+            //System.out.println(d+" "+pos+" "+);
+
+            float elementDistance = new Vector3f(d.position.x, d.position.y, 0).distance(pos);
+            if (elementDistance < minDistance){
+                minDistance = elementDistance;
+                currentElement = d;
+            }
+        }
+
+        float maxDistanceThreshold = 0.2f;
+        //System.out.println(minDistance+" "+currentElement.position);
+        if (minDistance < maxDistanceThreshold){
+            //System.out.println(currentElement);
+            hovered = currentElement;
+        }
+        else
+            hovered = null;
+    }
+    void uiInteract(CardHolder c){
+        if (c == turnPlayer.ResourceCards && turnPlayer.ResourceCards.current() != null)
+            selectCurrentResourceCard();
+        else if (c == turnPlayer.OpenTrade && turnPlayer.OpenTrade.current() != null)
+            selectCurrentTradeCard();
+        else if (c == turnPlayer.DevelopmentCards && turnPlayer.DevelopmentCards.current() != null)
+            useDevelopmentCard();
+        else if (c == turnPlayer.TradingCards && turnPlayer.TradingCards.current() != null)
+            openTradingInventory();
+    }
+    void MouseButtonBind(long win, int button, int action, int mods){
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+            uiInteract(hovered);
+    }
+    CardHolder hovered;
     void bindKeys(){
+        Renderer.bindScrollCallback(this::MouseWheelBinds);
+        Renderer.bindCursorPosCallback(this::CursorMovementBinds);
+        Renderer.bindMouseCallback(this::MouseButtonBind);
         Renderer.bindCallback((window, key, scancode, action, mods) -> {
             if (!justPressed(key))
                 return;
@@ -329,15 +388,7 @@ public class Catan implements Renderable, Renderable2d{
                 if (key == GLFW_KEY_R) {
                     if (turnPlayer.UIElements.current() == null)
                         return;
-                    CardHolder c = turnPlayer.UIElements.current().data;
-                    if (c == turnPlayer.ResourceCards && turnPlayer.ResourceCards.current() != null)
-                        selectCurrentResourceCard();
-                    else if (c == turnPlayer.OpenTrade && turnPlayer.OpenTrade.current() != null)
-                        selectCurrentTradeCard();
-                    else if (c == turnPlayer.DevelopmentCards && turnPlayer.DevelopmentCards.current() != null)
-                        useDevelopmentCard();
-                    else if (c == turnPlayer.TradingCards && turnPlayer.TradingCards.current() != null)
-                        openTradingInventory();
+                    uiInteract(turnPlayer.UIElements.current().data);
                 }
             }
 
@@ -393,19 +444,16 @@ public class Catan implements Renderable, Renderable2d{
             return;
         updateDice = false;
 
-        if (die1 != null)
-            Renderer.removeMesh2d(die1);
         die1 = new Mesh(dieMeshes[roll1-1]);
         die1.rotation.rotateLocalX(Math.toRadians(90));
-        die1.position = new Vector3f(-0.1f,0.32f,1f);
-        Renderer.addMesh2d(die1);
+        die1.position = new Vector3f(-0.2f,.8f,1f);
+        die1.scale = new Vector3f(2,2,2);
 
-        if (die2 != null)
-            Renderer.removeMesh2d(die2);
         die2 = new Mesh(dieMeshes[roll2-1]);
         die2.rotation.rotateLocalX(Math.toRadians(90));
-        die2.position = new Vector3f(0.1f,0.32f,1f);
-        Renderer.addMesh2d(die2);
+        die2.position = new Vector3f(0.2f,.8f,1f);
+        die2.scale = new Vector3f(2,2,2);
+
     }
 
 

@@ -53,4 +53,10 @@ public class Mesh {
             p.drawVertices(shader);
         }
     }
+    public boolean rayIntersects(Vector3f position, Vector3f ray){
+        for (VertexCollection piece : pieces)
+            if (piece.rayIntersects(position,ray))
+                return true;
+        return false;
+    }
 }

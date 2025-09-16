@@ -1,18 +1,19 @@
 import RenderingStuff.Mesh;
 import org.joml.*;
 
-import javax.swing.text.Position;
 import java.lang.Math;
 import java.util.*;
 public class CardHolder<E> implements Renderable2d {
     List<Card<E>> Cards = new ArrayList<>();
     int ind = 0;
     List<Card<E>> CardsSelected = new ArrayList<>();
-    boolean visible = false;
+    boolean visible = true;
     Player owner;
     public Vector3f position = new Vector3f(0,0,0);
+    public Vector3f scale = new Vector3f(2,2,2);
+
     public float rotation = 0;
-    public float len = 0.05f;
+    public float len = .2f;
     HashMap<E, Integer> Counts = new HashMap<>();
     public CardHolder(Player owner){
         this.owner = owner;
@@ -114,7 +115,7 @@ public class CardHolder<E> implements Renderable2d {
         if (val && !visible || !val && visible)
             toggleVisible();
     }
-    public void setPositions(){
+    public void setTransforms(){
         //System.out.println(current().data+" "+ind);
         ind = Math.max(0, Math.min(Cards.size()-1, ind));
         for (int i = 0; i < Cards.size(); i++){
@@ -123,9 +124,9 @@ public class CardHolder<E> implements Renderable2d {
 
                 int midDiff = i-ind;
                 float angle = (float)Math.toRadians(Math.min(180f/Cards.size(), 180f/7f)) * midDiff;
-                float len = 0.1f;
+                float len = this.len;
                 if (midDiff == 0)
-                    len += this.len;
+                    len *= 2;
                 Vector3f rotated = new Vector3f(0,len,0).rotateZ(angle + rotation);
                 c.add(rotated);
 
@@ -134,11 +135,13 @@ public class CardHolder<E> implements Renderable2d {
                 Cards.get(i).mesh.position = c;
                 Cards.get(i).mesh.rotation = new Quaternionf();//.lookAlong(c,new Vector3f(0,1,0));
                 Cards.get(i).mesh.rotation.rotateLocalY((float)Math.toRadians(180)).rotateLocalX((float)Math.toRadians(90)).rotateLocalZ(angle + rotation);//.lookAlong(c,position);
+                Cards.get(i).mesh.scale = scale;
 
                 if (Cards.get(i).HighLight != null){
-                    Cards.get(i).HighLight.position = c.add(0,0,0.01f, new Vector3f());
+                    Cards.get(i).HighLight.position = c.add(0,0,0.02f, new Vector3f());
                     //System.out.println("HAS HIGHLIGHT "+Cards.get(i).HighLight.position);
                     Cards.get(i).HighLight.rotation = Cards.get(i).mesh.rotation;
+                    Cards.get(i).HighLight.scale = scale.add(.2f,.2f,.2f, new Vector3f());
                 }
             }
         }
@@ -164,7 +167,7 @@ public class CardHolder<E> implements Renderable2d {
         ArrayList<Mesh> out = new ArrayList<>();
         if (!visible)
             return out;
-        setPositions();
+        setTransforms();
         for (Card<E> c : Cards)
             out.addAll(c.toMesh());
         return out;

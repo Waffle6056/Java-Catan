@@ -41,14 +41,14 @@ public class Player implements Renderable2d {
     public void Playercreate(String name){
         this.name=name;
         UIElements.add(DevelopmentCards);
-        DevelopmentCards.position = new Vector3f(-0.2f,-0.2f,.5f);
-        DevelopmentCards.len = 0.2f;
+        DevelopmentCards.position = new Vector3f(-0.4f,-0.4f,1f);
+        DevelopmentCards.len = 0.4f;
 
         UIElements.add(ResourceCards);
-        ResourceCards.position = new Vector3f(0.4f,-0.4f,1f);
+        ResourceCards.position = new Vector3f(0.8f,-0.8f,1f);
 
         UIElements.add(TradingCards);
-        TradingCards.position = new Vector3f(0.4f,0.4f,1f);
+        TradingCards.position = new Vector3f(0.8f,0.8f,1f);
         TradingCards.rotation = (float) Math.toRadians(180f);
 
         UIElements.add(OpenTrade);

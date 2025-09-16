@@ -10,6 +10,7 @@ public class Board implements Renderable{
     HashMap<Integer, ArrayList<Hex>> numbers;
     java.util.List<Mesh> ports = new ArrayList<>();
     java.util.List<Mesh> reqSig = new ArrayList<>();
+
     public Board() {
         grid=new HashMap<>();
         try {
@@ -27,86 +28,101 @@ public class Board implements Renderable{
     //(q - 1, r + 1, s)
     //(q - 1, r, s + 1)
     //(q, r - 1, s + 1)
+    static int[] deltaQ = new int[]{-1,-1,0,1,1,0};
+    static int[] deltaR = new int[]{1,0,-1,-1,0,1};
+    static int[] deltaS = new int[]{0,1,1,0,-1,-1};
+
     boolean build(Catan.BuildingOption Option, Player turnPlayer, Catan instance) {
         return build(Option, turnPlayer, instance, new Building[1]);
     }
-    boolean build(Catan.BuildingOption Option, Player turnPlayer, Catan instance, Building[] out) {
+
+    boolean build(Catan.BuildingOption option, Player turnPlayer, Catan instance, Building[] out) {
 
         //check if required resource amount
         // return false if not enought
-        if (!turnPlayer.checkAmt(Option))
+        if (!turnPlayer.checkAmt(option))
             return false;
 
-        if (Option == Catan.BuildingOption.Town || Option == Catan.BuildingOption.City){
-            if (Option == Catan.BuildingOption.Town && turnPlayer.settlements == 0)
-                return false;
-            if (Option == Catan.BuildingOption.City && turnPlayer.cities == 0)
-                return false;
-
-            instance.waitMouseRelease();
-
-            Vector3f mouseClickPos = instance.waitMouseClick();
-            Hex hex = instance.selectHex(mouseClickPos);
-            Hex.HexBuilding ver = instance.selectVertex(hex, mouseClickPos);
-
-            //System.out.println(hex.x + " " + hex.y+" "+ver+" "+hex.buildings[ver.index]);
-            if (hex.constructbuilding(ver, Option, turnPlayer)) {
-                turnPlayer.pay(Option);
-                if (Option == Catan.BuildingOption.City) {
-                    instance.Renderer.removeMesh(hex.buildings[ver.index].mesh);
-                    turnPlayer.settlements++;
-                    turnPlayer.cities--;
-                }
-                else
-                    turnPlayer.settlements--;
-                instance.MeshQueue.add(hex.buildings[ver.index]);
-                //System.out.println("COMPLETED BUILDING "+hex.buildings[ver.index].type);
-                out[0] = hex.buildings[ver.index];
-                if (out[0].ConnectingPort != null)
-                    turnPlayer.TradingCards.add(out[0].ConnectingPort);
-                return true;
-                //System.out.println("built town/city "+hex.mesh.position+" "+ver);
-            }
-            return false;
+        if (option == Catan.BuildingOption.Town || option == Catan.BuildingOption.City){
+            return constructTownCity(option, turnPlayer, instance, out);
         }
-        else if (Option == Catan.BuildingOption.Road){
-
-            instance.waitMouseRelease();
-
-            Vector3f mouseClickPos1 = instance.waitMouseClick();
-            Hex hex1 = instance.selectHex(mouseClickPos1);
-            Hex.HexBuilding ver1 = instance.selectVertex(hex1, mouseClickPos1);
-
-            instance.waitMouseRelease();
-
-            Vector3f mouseClickPos2 = instance.waitMouseClick();
-            Hex hex2 = instance.selectHex(mouseClickPos2);
-            Hex.HexBuilding ver2 = instance.selectVertex(hex2, mouseClickPos2);
-
-            //System.out.println(hex1.x+" "+hex1.y+" "+ver1);
-            //System.out.println(hex2.x+" "+hex2.y+" "+ver2);
-
-            Road[] t = new Road[1];
-            if (hex1.constructRoads(ver1, hex2, ver2, Catan.BuildingOption.Road, turnPlayer, t)){
-                instance.MeshQueueRoad.add(t[0]);
-                turnPlayer.pay(Option);
-//                hex1.constructbuilding(ver1, BuildingOption.Road, turnPlayer);
-//                hex2.constructbuilding(ver2, BuildingOption.Road, turnPlayer);
-                return true;
-            }
-            else
-                return false;
-
+        else if (option == Catan.BuildingOption.Road){
+            return constructRoad(option, turnPlayer, instance, out);
         }
         return false;
     }
-    public void makeDefaltBoard(int Dimesion1,int Dimesion2,int Dimesion3,String tileamounts,String DiceTiles) throws FileNotFoundException {
+
+    record buildingSlot(Hex hex, Hex.HexBuilding ver){}
+
+    buildingSlot selectSlot(Catan instance){
+        instance.waitMouseRelease();
+
+        Vector3f mouseClickPos = instance.waitMouseClick();
+        Hex hex = instance.selectHex(mouseClickPos);
+        Hex.HexBuilding ver = instance.selectVertex(hex, mouseClickPos);
+        return new buildingSlot(hex, ver);
+    }
+
+    boolean constructTownCity(Catan.BuildingOption option, Player turnPlayer, Catan instance, Building[] out){
+        if (option == Catan.BuildingOption.Town && turnPlayer.settlements == 0)
+            return false;
+        if (option == Catan.BuildingOption.City && turnPlayer.cities == 0)
+            return false;
+
+        buildingSlot slot = selectSlot(instance);
+        Hex hex = slot.hex;
+        Hex.HexBuilding ver = slot.ver;
+
+
+        //System.out.println(hex.x + " " + hex.y+" "+ver+" "+hex.buildings[ver.index]);
+        if (hex.constructbuilding(ver, option, turnPlayer)) {
+            turnPlayer.pay(option);
+            if (option == Catan.BuildingOption.City) {
+                turnPlayer.settlements++;
+                turnPlayer.cities--;
+            }
+            else
+                turnPlayer.settlements--;
+            instance.MeshQueue.add(hex.buildings[ver.index]);
+            //System.out.println("COMPLETED BUILDING "+hex.buildings[ver.index].type);
+            out[0] = hex.buildings[ver.index];
+            if (out[0].ConnectingPort != null)
+                turnPlayer.TradingCards.add(out[0].ConnectingPort);
+            return true;
+            //System.out.println("built town/city "+hex.mesh.position+" "+ver);
+        }
+        return false;
+    }
+
+    boolean constructRoad(Catan.BuildingOption option, Player turnPlayer, Catan instance, Building[] out){
+
+        buildingSlot slot1 = selectSlot(instance);
+        Hex hex1 = slot1.hex;
+        Hex.HexBuilding ver1 = slot1.ver;
+
+        buildingSlot slot2 = selectSlot(instance);
+        Hex hex2 = slot2.hex;
+        Hex.HexBuilding ver2 = slot2.ver;
+
+        //System.out.println(hex1.x+" "+hex1.y+" "+ver1);
+        //System.out.println(hex2.x+" "+hex2.y+" "+ver2);
+
+        Road[] t = new Road[1];
+        if (hex1.constructRoads(ver1, hex2, ver2, Catan.BuildingOption.Road, turnPlayer, t)){
+            instance.MeshQueueRoad.add(t[0]);
+            turnPlayer.pay(option);
+//                hex1.constructbuilding(ver1, BuildingOption.Road, turnPlayer);
+//                hex2.constructbuilding(ver2, BuildingOption.Road, turnPlayer);
+            return true;
+        }
+        else
+            return false;
+    }
+
+    void loadTileCounts(String tileamounts, ArrayList<Integer> tiles, ArrayList<String> names)  throws FileNotFoundException {
         Scanner Filetiles=new Scanner(new File(tileamounts));
-        Scanner dice=new Scanner(new File(DiceTiles));
         int times=Filetiles.nextInt();
         Filetiles.nextLine();
-        ArrayList<Integer> tiles=new ArrayList<>();
-        ArrayList<String> names=new ArrayList<>();
         numbers=new HashMap<>();
         int d=0;
         while (times-->0){
@@ -114,40 +130,45 @@ public class Board implements Renderable{
             tiles.add(Filetiles.nextInt());
             Filetiles.nextLine();
         }
+    }
 
+    void placeRandomTile(int q, int r, int s, ArrayList<Integer> tiles, ArrayList<String> names){
+        int random=(int)(Math.random()*tiles.size());
+        int temp=tiles.get(random);
+
+        grid.putIfAbsent(encoder(q,r,s),new Hex(q,r,s,names.get(random)));
+        temp--;
+        tiles.set(random,temp);
+        if (temp==0){
+            tiles.remove(random);
+            names.remove(random);
+        }
+    }
+
+    void fillGrid(int Dimesion1,int Dimesion2,int Dimesion3, String tileamounts) throws FileNotFoundException{
+        ArrayList<Integer> tiles=new ArrayList<>();
+        ArrayList<String> names=new ArrayList<>();
+        loadTileCounts(tileamounts, tiles, names);
         //System.out.println("step 1");
         for (int f = 0; f < Dimesion1; f++) {
             for (int i = 0; i < Dimesion3+2-f; i++) {
-
                 int q=-f-i,r=f,s=i;
-                int random=(int)(Math.random()*tiles.size());
-                int temp=tiles.get(random);
-
-                grid.putIfAbsent(encoder(q,r,s),new Hex(q,r,s,names.get(random)));
-                temp--;
-                tiles.set(random,temp);
-                if (temp==0){
-                    tiles.remove(random);
-                    names.remove(random);
-                }
+                placeRandomTile(q,r,s,tiles,names);
             }
             // System.out.println("step 2");
         }
         for (int f = 1; f < Dimesion2; f++) {
             for (int i = 0; i < Dimesion3 + 2 - f; i++) {
                 int q = -i, r = -f, s = f + i;
-                int random=(int)(Math.random()*tiles.size());
-                int temp=tiles.get(random);
-
-                grid.putIfAbsent(encoder(q,r,s),new Hex(q,r,s,names.get(random)));
-                temp--;
-                tiles.set(random,temp);
-                if (temp==0){
-                    tiles.remove(random);
-                    names.remove(random);
-                }
+                placeRandomTile(q,r,s,tiles,names);
             }
         }
+    }
+
+    public void makeDefaltBoard(int Dimesion1,int Dimesion2,int Dimesion3,String tileamounts,String DiceTiles)  throws FileNotFoundException {
+
+        fillGrid(Dimesion1,Dimesion2,Dimesion3,tileamounts);
+
         for(String k:grid.keySet()){
             String[] line=k.split(",");
             int q=Integer.parseInt(line[0]), r=Integer.parseInt(line[1]), s=Integer.parseInt(line[2]);
@@ -178,15 +199,13 @@ public class Board implements Renderable{
         }
 
         int q = 1, r = -1, s = 0, dir=0;
-        times=dice.nextInt();dice.nextLine();
+        Scanner dice=new Scanner(new File(DiceTiles));
+        int times=dice.nextInt();dice.nextLine();
         HashSet<String> vist=new HashSet<>();
         for (int i = 2; i <= 12; i++) {
             numbers.putIfAbsent(i, new ArrayList<>());
         }
 
-        int[] deltaQ = new int[]{-1,-1,0,1,1,0};
-        int[] deltaR = new int[]{1,0,-1,-1,0,1};
-        int[] deltaS = new int[]{0,1,1,0,-1,-1};
         for (int i = 0; i < times; i++) {
             int nQ = q+deltaQ[dir];
             int nR = r+deltaR[dir];

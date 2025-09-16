@@ -13,6 +13,7 @@ public class Building extends Canvas implements Renderable {
     Player owner;
     boolean inverted;// if Y is upsidedown;
     Mesh mesh;
+
     //boolean overrides = false;
     Road[] roads=new Road[3];
 
