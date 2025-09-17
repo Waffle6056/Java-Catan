@@ -189,7 +189,7 @@ public class Catan implements Renderable, Renderable2d{
     private void SetUp(){
 
         //overrides road building requirement because im too lazy to implement a better solution
-        Hex.ownerRequirementOverride = true;
+        Hex.roadRequirementOverride = true;
         ArrayList<Building> roundone =new ArrayList<>();
         for (int i = 0; i < players.size()*2; i++) {
             int ind = Math.min(players.size()*2-1-i, i);
@@ -197,17 +197,18 @@ public class Catan implements Renderable, Renderable2d{
             turnInd = ind;
             System.out.println("PLAYER "+ind);
 
-            System.out.println("BUILD A ROAD");
-            while (!Board.build(BuildingOption.Road, turnPlayer, this))
-                System.out.println("failed try again");
-
-            waitMouseRelease();
-
             Building[] out = new Building[1];
             System.out.println("BUILD A TOWN");
             while (!Board.build(BuildingOption.Town, turnPlayer, this, out))
                 System.out.println("failed try again");
             //System.out.println(out[0].resourcegain);
+
+            waitMouseRelease();
+
+            System.out.println("BUILD A ROAD");
+            while (!Board.build(BuildingOption.Road, turnPlayer, this))
+                System.out.println("failed try again");
+
             if (i<playersCount){
                 roundone.add(out[0]);
                 out[0].resourcegain=0;
@@ -219,7 +220,7 @@ public class Catan implements Renderable, Renderable2d{
         for (int i = 0; i < roundone.size(); i++)
             roundone.get(i).resourcegain=1;
 
-        Hex.ownerRequirementOverride = false;
+        Hex.roadRequirementOverride = false;
         turnPlayer = players.get(0);
         turnInd = -1;
         nextPlayerTurn();

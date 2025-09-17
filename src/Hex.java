@@ -124,58 +124,21 @@ public class Hex extends Canvas implements Renderable{
         return 0;
     }
 
-//    String buildingToString(Building b){
-//        return b.x+" "+b.y;
-//    }
-    public boolean startingCanBuild(Road e) {
-        Building temp = e.left;
-        boolean failed = false;
-        for (int i = 0; i < 3; i++) {
-            if (temp.getRoads()[i] == null) {
-                continue;
-            }
-            Building left = temp.getRoads()[i].left, right = temp.getRoads()[i].right;
-            if (left.type == Catan.BuildingOption.Town || right.type == Catan.BuildingOption.Town) {
-                failed = true;
-                break;
-            }
-        }
-        if (!failed) {
-            return true;
-        }
-        temp = e.right;
-        for (int i = 0; i < 3; i++) {
-            if (temp.getRoads()[i] == null) {
-                continue;
-            }
-            Building left = temp.getRoads()[i].left, right = temp.getRoads()[i].right;
-            if (left.type == Catan.BuildingOption.Town || right.type == Catan.BuildingOption.Town) {
-                return false;
-            }
-        }
-        return true;
-    }
-    static boolean ownerRequirementOverride = false;
+
     public boolean constructRoads(HexBuilding ver1, Hex hex2, HexBuilding ver2, Catan.BuildingOption option, Player owner, Road[] out){
         Building one=buildings[ver1.index],two=hex2.buildings[ver2.index];
         System.out.println("called build "+option);
         if (one == two)
             return false;
 
-        //System.out.println("passed check 2 "+two);
         for (int i = 0; i < 3; i++) {
             Road r = one.getRoads()[i];
-            if (r==null || r.owner != null && r.owner != owner){
-                continue;
-            }
-            if (!ownerRequirementOverride && !r.connectsWith(owner))
-                continue;
-            //System.out.println(one.getRoads()[i].left+" "+one.getRoads()[i].right);
-            if (r.left.equals(two)||r.right.equals(two)){
-                //System.out.println("passed check 3");
-                if (ownerRequirementOverride && !startingCanBuild(r)){
+            if (r != null && (two.equals(r.left) || two.equals(r.right))) {
+                if ( r.owner != null )
                     return false;
-                }
+                if ( !r.connectsWith(owner) )
+                    return false;
+
                 r.made(owner);
                 r.setPos(this, ver1, hex2, ver2); // mesh pos
                 out[0] = one.getRoads()[i];
@@ -184,9 +147,9 @@ public class Hex extends Canvas implements Renderable{
         }
         return false;
     }
-    //hex vertex option player
-    //Don't worry about resources
-    public boolean constructbuilding(HexBuilding vertex, Catan.BuildingOption option, Player owner){
+
+    static boolean roadRequirementOverride = false;
+    public boolean constructBuilding(HexBuilding vertex, Catan.BuildingOption option, Player owner){
         // moved building conditions in here cuase i needed to check them for both road vertexs
         Building temp=buildings[vertex.index];
         if (option != Catan.BuildingOption.Road)
@@ -199,12 +162,12 @@ public class Hex extends Canvas implements Renderable{
         if (option== Catan.BuildingOption.Town) {
 
             //CHECK ADJACENT BUILDINGS
-            boolean goodRoad=false;
+            boolean goodRoad= roadRequirementOverride;
             for (int i = 0; i < 3; i++) {
                 if (temp.getRoads()[i]==null){
                     continue;
                 }
-                Building left=temp.getRoads()[i].left,right=temp.getRoads()[i].right;
+                Building left=temp.getRoads()[i].left, right=temp.getRoads()[i].right;
                 if (goodRoad||temp.getRoads()[i].owner==owner){
                     goodRoad=true;
                 }
@@ -223,8 +186,6 @@ public class Hex extends Canvas implements Renderable{
             temp.resourcegain = 1;
             temp.type = option;
             temp.owner=owner;
-            owner.vp++;
-            temp.setPos(this,vertex);
             return true;
         }
         //city
@@ -234,17 +195,16 @@ public class Hex extends Canvas implements Renderable{
             temp.resourcegain = 2;
             temp.type = option;
             temp.owner=owner;
-            owner.vp++;
+
             return true;
         }
-
-        if (option== Catan.BuildingOption.Road){
-
-            temp.type = option;
-            temp.owner=owner;
-            owner.vp++;
-            return true;
-        }
+//
+//        if (option== Catan.BuildingOption.Road){
+//
+//            temp.type = option;
+//            temp.owner=owner;
+//            return true;
+//        }
         return false;
     }
 
@@ -257,17 +217,14 @@ public class Hex extends Canvas implements Renderable{
         }
     }
 
-    //Sharedside is from the e's point of view
-    public void combineHex(Hex e, int toE){
-        int awayE=toE-3;
-        if (awayE<0){
-            awayE+=6;
+    public void combineHex(Hex e, int sideIndex){
+        int awaySideIndex=sideIndex-3;
+        if (awaySideIndex<0){
+            awaySideIndex+=6;
         }
-        e.buildings[(awayE+1)%6].combine(buildings[toE]);
-        e.buildings[awayE].combine(buildings[(toE+1)%6]);
-        e.buildings[(awayE+1)%6] = buildings[toE];
-        e.buildings[awayE] = buildings[(toE+1)%6];
-        e.roads[awayE]=roads[toE];
+        e.buildings[(awaySideIndex+1)%6] = buildings[sideIndex];
+        e.buildings[awaySideIndex] = buildings[(sideIndex+1)%6];
+        e.roads[awaySideIndex]=roads[sideIndex];
     }
     public String toString(){
         return tostring;

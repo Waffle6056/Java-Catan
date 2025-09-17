@@ -11,6 +11,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
+//template file copied from lwjgl website
 public class HelloWorld {
 
     // The window handle
