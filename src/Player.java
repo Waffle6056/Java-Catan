@@ -13,6 +13,22 @@ public class Player implements Renderable2d {
         meshList.addAll(OpenTrade.toMesh2d());
         return meshList;
     }
+    enum ModelSet{
+        Red("CatanCardMeshes/PlayerOne.fbx","Buildings/RoadOne.fbx","Buildings/CityOne.fbx","Buildings/SettlementOne.fbx"),
+        White("CatanCardMeshes/PlayerTwo.fbx","Buildings/RoadTwo.fbx","Buildings/CityTwo.fbx","Buildings/SettlementTwo.fbx"),
+        Blue("CatanCardMeshes/PlayerThree.fbx","Buildings/RoadThree.fbx","Buildings/CityThree.fbx","Buildings/SettlementThree.fbx"),
+        Orange("CatanCardMeshes/PlayerFour.fbx","Buildings/RoadFour.fbx","Buildings/CityFour.fbx","Buildings/SettlementFour.fbx");
+        public final String ColorIndicator;
+        public final String RoadMesh;
+        public final String CityMesh;
+        public final String SettlementMesh;
+        ModelSet(String ColorIndicator, String RoadMesh, String CityMesh, String SettlementMesh) {
+            this.ColorIndicator = ColorIndicator;
+            this.RoadMesh = RoadMesh;
+            this.CityMesh = CityMesh;
+            this.SettlementMesh = SettlementMesh;
+        }
+    }
     String name;
     CardHolder<CardHolder> UIElements = new CardHolder<>(this);
     CardHolder<DevelopmentCard> DevelopmentCards = new CardHolder<>(this);
@@ -71,7 +87,7 @@ public class Player implements Renderable2d {
 
 
     //return null if no player has won;
-    public static void redopoints(List<Player> players) {//TODO call at end turn
+    public static void redopoints(List<Player> players) {
         for (int i = 0; i < players.size(); i++) {
             Player cu = players.get(i);
             if (cu.army >= 3 && cu.army > baron.army) {

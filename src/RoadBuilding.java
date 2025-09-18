@@ -4,18 +4,18 @@ public class RoadBuilding extends DevelopmentCard{
     public String meshFile(){ return "CatanCardMeshes/Development/CardRoadBuilding.fbx";}
     @Override
     public void use(Catan instance) {
-        StartBuildThread(instance);
+        StartBuildRoadsThread(instance);
     }
-    private void StartBuildThread(Catan instance){
+    private void StartBuildRoadsThread(Catan instance){
         try {
             //System.out.println("start build");
             new Thread( () -> {
-                Build(instance);
+                BuildRoads(instance);
             }).start();
 
         } catch (Exception e){}
     }
-    private void Build(Catan instance){
+    private void BuildRoads(Catan instance){
 
         instance.currentPhase = Catan.Phase.Rolling;
 

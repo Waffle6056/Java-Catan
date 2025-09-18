@@ -35,15 +35,11 @@ public class PortHolder<E> extends CardHolder<E>{
         return out;
     }
     public static Card<CardHolder<Hex.resource>> generatePortCard(PortHolder<Hex.resource> port) {
-        int fileInd = port.TradeRequirements.get(0).data.index;
-        String cardFile = "";
-        if (fileInd == -1)
-            cardFile = "CatanCardMeshes/Special/Arrow.fbx";
-        else
-            cardFile = Hex.resourceFileNames[fileInd];
+        String cardFile = port.TradeRequirements.get(0).data.ResourceMesh;
         Card<CardHolder<Hex.resource>> card = new Card<>(port, cardFile);
         return card;
     }
+
     static ArrayList<PortHolder<Hex.resource>> Ports = new ArrayList<>();
     public static PortHolder<Hex.resource> generatePort(){
         if (Ports.size() > 0)
@@ -55,7 +51,7 @@ public class PortHolder<E> extends CardHolder<E>{
             for (Card<Hex.resource> c : PortHolder.defaultInventory(5))
                 port.addPermanent(c);
             for (int j = 0; j < 2; j++) {
-                port.TradeRequirements.add(new Card<>(Hex.resource.values()[i], Hex.resourceFileNames[i]));
+                port.TradeRequirements.add(Card.createResourceCard(Hex.resource.values()[i]));
             }
             Ports.add((int)(Math.random()*Ports.size()), port);
         }

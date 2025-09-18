@@ -37,6 +37,6 @@ public class Card<E> implements Renderable {
         return out;
     }
     public static Card<Hex.resource> createResourceCard(Hex.resource r){
-        return new Card<>(r, Hex.resourceFileNames[r.index]);
+        return new Card<>(r, r.ResourceMesh);
     }
 }

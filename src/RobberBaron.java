@@ -15,33 +15,33 @@ public class RobberBaron implements Renderable, Renderable2d{
         mesh.rotation.rotateX((float)java.lang.Math.toRadians(-90));
         mesh.position.add(0,-5,0);
 
-        Hex hex = Hex.isRobberBaroned;
+        Hex hex = Hex.RobberBaronedHex;
         mesh.position = new Vector3f(hex.mesh.position.x, 2.75f, hex.mesh.position.z);
         meshNotifier = new Mesh("HexMeshes/Robber.fbx");
         meshNotifier.rotation.rotateX((float)java.lang.Math.toRadians(-90));
         meshNotifier.position.add(1f,0f,-1f);
     }
-    public void startRobbing(){
+    public void moveRobberBaron(){
         instance.currentPhase = Catan.Phase.Rolling;
+        meshNotifier.position.add(0f,0f,2f);
         try {
             //System.out.println("start build");
             new Thread( () -> {
-                meshNotifier.position.add(0f,0f,2f);
                 //Select New Hex
                 instance.waitMouseRelease();
 
                 Vector3f mouseClickPos = instance.waitMouseClick();
                 Hex hex = instance.selectHex(mouseClickPos);
-                while (Hex.isRobberBaroned == hex) {
+                while (Hex.RobberBaronedHex == hex) {
                     System.out.println("ROBBER MUST MOVE TO A DIFFERENT HEX");
                     instance.waitMouseRelease();
                     mouseClickPos = instance.waitMouseClick();
                     hex = instance.selectHex(mouseClickPos);
-
                 }
+
                 meshNotifier.position.add(0f,0f,-2f);
                 //assign is RobberBaron
-                Hex.isRobberBaroned = hex;
+                Hex.RobberBaronedHex = hex;
                 mesh.position = new Vector3f(hex.mesh.position.x, 2.75f, hex.mesh.position.z);
                 HashSet<Player> visited = new HashSet<>();
                 //Steal from near Player

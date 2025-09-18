@@ -59,38 +59,12 @@ public class Catan implements Renderable, Renderable2d{
     enum Phase{
         SetUp,
         Rolling,
-        Selecting,
         BuildingTrading,
         Nothing,
         Phase(){}
     }
 
 
-    String[] PlayerCards = {
-            "CatanCardMeshes/PlayerOne.fbx",
-            "CatanCardMeshes/PlayerTwo.fbx",
-            "CatanCardMeshes/PlayerThree.fbx",
-            "CatanCardMeshes/PlayerFour.fbx",
-    };
-    String[] RoadFiles = {
-            "Buildings/RoadOne.fbx",
-            "Buildings/RoadTwo.fbx",
-            "Buildings/RoadThree.fbx",
-            "Buildings/RoadFour.fbx",
-    };
-    String[] CityFiles = {
-            "Buildings/CityOne.fbx",
-            "Buildings/CityTwo.fbx",
-            "Buildings/CityThree.fbx",
-            "Buildings/CityFour.fbx",
-    };
-
-    String[] SettlementFiles = {
-            "Buildings/SettlementOne.fbx",
-            "Buildings/SettlementTwo.fbx",
-            "Buildings/SettlementThree.fbx",
-            "Buildings/SettlementFour.fbx",
-    };
     int roll1, roll2;
     boolean updateDice = false;
     Queue<Building> MeshQueue = new LinkedList<>();
@@ -100,8 +74,67 @@ public class Catan implements Renderable, Renderable2d{
     public void run(){
         Renderer = new CatanWindow();
         Renderer.run();
-        Board = new Board();
 
+        Board = new Board();
+        robber = new RobberBaron(this);
+        DevelopmentCard.createDeck();
+        setupMiscVisuals();
+
+        bindKeys();
+        currentPhase = Phase.SetUp;
+
+        System.out.println("temp player count = "+playersCount);
+
+        setupBank();
+        setupPlayers();
+
+        StartSetUpPhaseThread();
+//        turnPlayer = players.get(0);
+//        turnInd = -1;
+//        nextPlayerTurn();
+        loop();
+    }
+    void setupBank(){
+        Bank = new BankHolder<>(null);
+        for (Card<Hex.resource> c : BankHolder.defaultInventory(5))
+            Bank.addPermanent(c);
+        for (int j = 0; j < 4; j++)
+            Bank.TradeRequirements.add(new Card<>(Hex.resource.Desert, "CatanCardMeshes/Special/Arrow.fbx"));
+
+    }
+    void setupPlayers(){
+        players = new ArrayList<>();
+        // loads meshes
+        for (int i = 0; i < playersCount; i++) {
+            Player.ModelSet set = Player.ModelSet.values()[i];
+            players.add(new Player("PLAYER "+i,set.ColorIndicator));
+            players.get(i).roadFile = set.RoadMesh;
+            players.get(i).cityFile = set.CityMesh;
+            players.get(i).settlementFile = set.SettlementMesh;
+        }
+
+        for (int i = 0; i < playersCount; i++){
+            Player p = players.get(i);
+
+            //loads each player's inventory into the current player's trading options
+            for (int j = 0; j < playersCount; j++) {
+                Player b = players.get(j);
+                if (p != players.get(j))
+                    p.TradingCards.add(b.ResourceCards, b.markFile);
+            }
+
+            //loads resources for setup phase
+            int[] ar = {4,2,0,4,2};
+            for (int j = 0; j < 5; j++) {
+                for (int k = 0; k < ar[j]; k++) {
+                    p.ResourceCards.add(Card.createResourceCard(Hex.resource.values()[j]));
+                }
+            }
+            p.TradingCards.add(Bank, "CatanCardMeshes/Special/Arrow.fbx");
+
+        }
+    }
+    void setupMiscVisuals(){
         cursor = new Mesh("CatanCardMeshes/Special/Arrow.fbx");
         //cursor.rotation.rotateX((float)java.lang.Math.toRadians(-90));
         cursor.scale.mul(1f,1f,1f);
@@ -121,87 +154,31 @@ public class Catan implements Renderable, Renderable2d{
         m.scale.mul(0.00005f,0.00005f,0.00005f);
         //m.rotation.lookAlong(m.position,new Vector3f(0,1,0)).rotateLocalX((float) java.lang.Math.toRadians(90));
         //m.rotation.rotateAxis(Math.toRadians(90),1,0,0);
-
-        robber = new RobberBaron(this);
-        guideElement.build(PlayerCards,this);
+        guideElement.build(this);
         guideElement.position = new Vector3f(0f,-0.2f,1f);
         guideElement.len = 0.2f;
         guideElement.add(null, "CatanCardMeshes/Special/BuildingCost.fbx");
         guideElement.add(null, "CatanCardMeshes/Special/Controls.fbx");
-//        guideElement.add(null, "Numbers/DieOne.fbx");
-//        guideElement.add(null, "Numbers/DieTwo.fbx");
-//        guideElement.add(null, "Numbers/DieThree.fbx");
-//        guideElement.add(null, "Numbers/DieFour.fbx");
-//        guideElement.add(null, "Numbers/DieFive.fbx");
-//        guideElement.add(null, "Numbers/DieSix.fbx");
 
-        bindKeys();
-        currentPhase = Phase.SetUp;
-        DevelopmentCard.createDeck();
 
         Renderer.camera.camPos.add(1.9555556f,3f,3.288889f);
-
-        System.out.println("SELECT PLAYER COUNT INTERFACE HERE");
-        System.out.println("temp player count = "+playersCount);
-
-
-        players = new ArrayList<>();
-        for (int i = 0; i < playersCount; i++) {
-            players.add(new Player("PLAYER "+i,PlayerCards[i]));
-            players.get(i).roadFile = RoadFiles[i];
-            players.get(i).cityFile = CityFiles[i];
-            players.get(i).settlementFile = SettlementFiles[i];
-        }
-
-        Bank = new BankHolder<>(null);
-        for (Card<Hex.resource> c : BankHolder.defaultInventory(5))
-            Bank.addPermanent(c);
-        for (int j = 0; j < 4; j++)
-            Bank.TradeRequirements.add(new Card<>(Hex.resource.Desert, "CatanCardMeshes/Special/Arrow.fbx"));
-
-
-        for (int i = 0; i < playersCount; i++){
-            //p.updateResourcesToCards();
-            Player p = players.get(i);
-            for (int j = 0; j < playersCount; j++) {
-                Player b = players.get(j);
-                if (p != players.get(j))
-                    p.TradingCards.add(b.ResourceCards, b.markFile);
-            }
-            int[] ar = {4,2,0,4,2};
-            for (int j = 0; j < 5; j++) {
-                for (int k = 0; k < ar[j]; k++) {
-                    p.ResourceCards.add(Card.createResourceCard(Hex.resource.values()[j]));
-                }
-            }
-            p.TradingCards.add(Bank, "CatanCardMeshes/Special/Arrow.fbx");
-
-        }
-
-
-        StartSetUpThread();
-//        turnPlayer = players.get(0);
-//        turnInd = -1;
-//        nextPlayerTurn();
-        loop();
     }
-
     private void SetUp(){
 
-        //overrides road building requirement because im too lazy to implement a better solution
         Hex.roadRequirementOverride = true;
         ArrayList<Building> roundone =new ArrayList<>();
-        for (int i = 0; i < players.size()*2; i++) {
-            int ind = Math.min(players.size()*2-1-i, i);
+        int n = players.size()*2;
+        for (int i = 0; i < n; i++) {
+            int ind = Math.min(n-i-1, i);
             turnPlayer = players.get(ind);
             turnInd = ind;
             System.out.println("PLAYER "+ind);
 
-            Building[] out = new Building[1];
+
             System.out.println("BUILD A TOWN");
+            Building[] out = new Building[1];
             while (!Board.build(BuildingOption.Town, turnPlayer, this, out))
                 System.out.println("failed try again");
-            //System.out.println(out[0].resourcegain);
 
             waitMouseRelease();
 
@@ -285,7 +262,7 @@ public class Catan implements Renderable, Renderable2d{
         Board.rolled(random);
 
         if (random==7){
-            robber.startRobbing();
+            robber.moveRobberBaron();
         }
         else
             currentPhase = Phase.BuildingTrading;
@@ -344,6 +321,81 @@ public class Catan implements Renderable, Renderable2d{
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
             uiInteract(hovered);
     }
+    void swapNextVisibleUiElement(){
+        int ind = 0;
+        do {
+            turnPlayer.UIElements.select(false);
+            turnPlayer.UIElements.scroll(1); // scroll ui elements
+            turnPlayer.UIElements.select(true);
+            ind++;
+        } while (!turnPlayer.UIElements.current().data.visible && ind < turnPlayer.UIElements.Cards.size());
+        turnPlayer.UIElements.toggleVisible(true);
+        //System.out.println(turnPlayer.UIElements.getMeshes().size());
+//                    System.out.println(turnPlayer.UIElements.current().data.current().data);
+    }
+    void RollingPhaseKeybinds(int key){
+        switch (key) {
+            case GLFW_KEY_Z:
+                turnPlayer.DevelopmentCards.toggleVisible();
+                break;
+
+            case GLFW_KEY_X:
+                turnPlayer.ResourceCards.toggleVisible();
+                break;
+
+            case GLFW_KEY_C:
+                turnPlayer.TradingCards.toggleVisible();
+                break;
+
+            case GLFW_KEY_V:
+                turnPlayer.OpenTrade.toggleVisible();
+                break;
+
+            case GLFW_KEY_TAB:
+                swapNextVisibleUiElement();
+                break;
+
+            case GLFW_KEY_E:
+                turnPlayer.UIElements.current().data.scroll(1); // scroll current ui element
+                break;
+
+            case GLFW_KEY_Q:
+                turnPlayer.UIElements.current().data.scroll(-1);
+                break;
+
+            case GLFW_KEY_R:
+                if (turnPlayer.UIElements.current() == null)
+                    return;
+                uiInteract(turnPlayer.UIElements.current().data);
+                break;
+        }
+    }
+    void BuildingTradingPhaseKeybinds(int key) {
+        if (key == GLFW_KEY_1) {
+            startBuildThread(BuildingOption.Road);
+        }
+        if (key == GLFW_KEY_2) {
+            startBuildThread(BuildingOption.Town);
+        }
+        if (key == GLFW_KEY_3) {
+            startBuildThread(BuildingOption.City);
+        }
+
+        if (key == GLFW_KEY_4 && turnPlayer.payCheck(0, 0, 0, 0, 0)) {
+            turnPlayer.pay(0, 0, 0, 0, 0);
+            DevelopmentCard d = DevelopmentCard.createNew();
+            //System.out.println(d.meshFile);
+            turnPlayer.DevelopmentCards.add(d, d.meshFile());
+        }
+
+        if (key == GLFW_KEY_F)
+            tradeCurrentSelectedCards();
+
+        if (key == GLFW_KEY_ENTER) {
+            nextPlayerTurn();
+        }
+    }
+
     CardHolder hovered;
     void bindKeys(){
         Renderer.bindScrollCallback(this::MouseWheelBinds);
@@ -355,72 +407,12 @@ public class Catan implements Renderable, Renderable2d{
             if (key == GLFW_KEY_GRAVE_ACCENT)
                 guideElement.toggleVisible();
 
-            if (currentPhase == Phase.Rolling || currentPhase == Phase.BuildingTrading){
-                if (key == GLFW_KEY_Z)
-                    turnPlayer.DevelopmentCards.toggleVisible();
-                if (key == GLFW_KEY_X) {
-                    turnPlayer.ResourceCards.toggleVisible();
-
-                }
-                if (key == GLFW_KEY_C) {
-                    turnPlayer.TradingCards.toggleVisible();
-                    //  System.out.println(turnPlayer.TradingCards.Cards.size());
-                }
-                if (key == GLFW_KEY_V)
-                    turnPlayer.OpenTrade.toggleVisible();
+            if (currentPhase == Phase.Rolling || currentPhase == Phase.BuildingTrading)
+                RollingPhaseKeybinds(key);
 
 
-                if (key == GLFW_KEY_TAB) {
-                    int lazy = 0;
-                    do {
-                        turnPlayer.UIElements.select(false);
-                        turnPlayer.UIElements.scroll(1); // scroll ui elements
-                        turnPlayer.UIElements.select(true);
-                        lazy++;
-                    } while (!turnPlayer.UIElements.current().data.visible && lazy < 10);
-                    turnPlayer.UIElements.toggleVisible(true);
-                    //System.out.println(turnPlayer.UIElements.getMeshes().size());
-//                    System.out.println(turnPlayer.UIElements.current().data.current().data);
-                }
-                if (key == GLFW_KEY_E)
-                    turnPlayer.UIElements.current().data.scroll(1); // scroll current ui element
-                if (key == GLFW_KEY_Q)
-                    turnPlayer.UIElements.current().data.scroll(-1);
-                if (key == GLFW_KEY_R) {
-                    if (turnPlayer.UIElements.current() == null)
-                        return;
-                    uiInteract(turnPlayer.UIElements.current().data);
-                }
-            }
-
-            if (currentPhase == Phase.BuildingTrading) {
-
-                if (key == GLFW_KEY_1) {
-                    startBuildThread(BuildingOption.Road);
-                }
-                if (key == GLFW_KEY_2) {
-                    startBuildThread(BuildingOption.Town);
-                }
-                if (key == GLFW_KEY_3) {
-                    startBuildThread(BuildingOption.City);
-                }
-//                if (key == GLFW_KEY_4 && turnPlayer.payCheck(0, 1, 1, 0, 1)) {
-//                    turnPlayer.pay(0, 1, 1, 0, 1);
-                if (key == GLFW_KEY_4 && turnPlayer.payCheck(0, 0, 0, 0, 0)) {
-                    turnPlayer.pay(0, 0, 0, 0, 0);
-                    DevelopmentCard d = DevelopmentCard.createNew();
-                    //System.out.println(d.meshFile);
-                    turnPlayer.DevelopmentCards.add(d, d.meshFile());
-                }
-
-                if (key == GLFW_KEY_F)
-                    tradeCurrentSelectedCards();
-
-                if (key == GLFW_KEY_ENTER) {
-                    nextPlayerTurn();
-                }
-
-            }
+            if (currentPhase == Phase.BuildingTrading)
+                BuildingTradingPhaseKeybinds(key);
 
         });
     }
@@ -540,6 +532,7 @@ public class Catan implements Renderable, Renderable2d{
             pressed.add(k);
         else
             return false;
+
         try {
             //System.out.println("start build");
             new Thread( () -> {
@@ -598,7 +591,7 @@ public class Catan implements Renderable, Renderable2d{
         trade(turnPlayer.OpenTrade.Data);
         openTradingInventory(turnPlayer.OpenTrade.Data);
     }
-    private void StartSetUpThread(){
+    private void StartSetUpPhaseThread(){
         try {
             //System.out.println("start build");
             new Thread( () -> {

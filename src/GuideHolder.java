@@ -12,11 +12,12 @@ public class GuideHolder<E> extends CardHolder<E>{
     public GuideHolder(Player owner){
         super(owner);
     }
-    public void build(String[] PlayerCards, Catan instance){
+    public void build(Catan instance){
         playerCards=new CardHolder<>(owner);
-        for (int i = 0; i < PlayerCards.length; i++) {
-            playerCards.add(new Card<>(null, PlayerCards[i]));
-            playerCards.get(i).HighLight = new Mesh(PlayerCards[i]);
+        for (int i = 0; i < Player.ModelSet.values().length; i++) {
+            String file = Player.ModelSet.values()[i].ColorIndicator;
+            playerCards.add(new Card<>(null, file));
+            playerCards.get(i).HighLight = new Mesh(file);
         }
         addAll(playerCards);
         Vector3f c = new Vector3f(position);

@@ -20,16 +20,19 @@ public class Hex extends Canvas implements Renderable{
     }
 
     enum resource{
-        Brick(0),
-        Grain(1),
-        Rock(2),
-        Wood(3),
-        Wool(4),
-        Desert(-1),
-        Sea(-2);
-        public final int index;
-        resource(int l) {
-            this.index =l;
+        Brick(0, "HexMeshes/Hills.fbx","CatanCardMeshes/Resource/CardBrick.fbx"),
+        Grain(1, "HexMeshes/Mountains.fbx","CatanCardMeshes/Resource/CardGrain.fbx"),
+        Rock(2, "HexMeshes/Mountains.fbx","CatanCardMeshes/Resource/CardOre.fbx"),
+        Wood(3, "HexMeshes/Forest.fbx","CatanCardMeshes/Resource/CardLumber.fbx"),
+        Wool(4, "HexMeshes/Plains.fbx","CatanCardMeshes/Resource/CardWool.fbx"),
+        Desert(-1, "HexMeshes/Desert.fbx", "CatanCardMeshes/Special/Arrow.fbx");
+        public final int Index;
+        public final String HexMesh;
+        public final String ResourceMesh;
+        resource(int Index, String HexMesh, String ResourceMesh) {
+            this.Index = Index;
+            this.HexMesh = HexMesh;
+            this.ResourceMesh = ResourceMesh;
         }
     }
     enum HexBuilding{// Up then clockwise
@@ -44,23 +47,14 @@ public class Hex extends Canvas implements Renderable{
             this.index =l;
         }
     }
-    public static String[] resourceFileNames = {
-            "CatanCardMeshes/Resource/CardBrick.fbx",
-            "CatanCardMeshes/Resource/CardGrain.fbx",
-            "CatanCardMeshes/Resource/CardOre.fbx",
-            "CatanCardMeshes/Resource/CardLumber.fbx",
-            "CatanCardMeshes/Resource/CardWool.fbx",
-    };
     Mesh mesh, numberMesh;
     Building[] buildings=new Building[6];
     Road[] roads=new Road[6];
-    String tostring;
+    String tostring = "Desert";
     resource type;
     int dicenumber;
-    float x, y, size;
-    int dupe = 2;
-    int orginx=200,orginy=100;
-    static Hex isRobberBaroned;
+    float x, y;
+    static Hex RobberBaronedHex;
     int q,r,s;
     //q + r + s = 0
     //Neighbors
@@ -71,43 +65,32 @@ public class Hex extends Canvas implements Renderable{
     //(q - 1, r, s + 1)
     //(q, r - 1, s + 1)
 
+
     public Hex(int q, int r, int s, String type){
-        this.q=q;
-        this.r=r;
-        this.s=s;
         this.type=resource.valueOf(type);
-        switch (this.type)
-        {
-            case Brick -> mesh = new Mesh("HexMeshes/Hills.fbx");
-            case Wool -> mesh = new Mesh("HexMeshes/Plains.fbx");
-            case Desert -> mesh = new Mesh("HexMeshes/Desert.fbx");
-            case Rock -> mesh = new Mesh("HexMeshes/Mountains.fbx");
-            case Grain -> mesh = new Mesh("HexMeshes/Field.fbx");
-            case Wood -> mesh = new Mesh("HexMeshes/Forest.fbx");
-            default -> mesh = new Mesh("catan.fbx");
-        }
+        mesh = new Mesh(this.type.HexMesh);
 
-        x=(-q+r)*(21*dupe+2);
-        y=s*(38*dupe-2);
-        size=25*dupe;
-        x/=45;
-        y/=45;
-        size/=100;
-
-
-
-        mesh.position.add(x,0,y);
-        mesh.rotation.rotateAxis((float)Math.toRadians(-90),1,0,0);
+        setPositions(q,r,s);
         //System.out.println(mesh.position);
         makeVertexs();
-        tostring="Desert";
+
         if (this.type.equals(resource.Desert)){
             // System.out.println("I own the Land");
-            isRobberBaroned=this;
+            RobberBaronedHex = this;
         }
     }
     public Hex(String j){
         tostring=j;
+    }
+    void setPositions(int q, int r, int s){
+        this.q=q;
+        this.r=r;
+        this.s=s;
+        x=(-q+r)*44/45f;
+        y=s*74/45f;
+
+        mesh.position.add(x,0,y);
+        mesh.rotation.rotateAxis((float)Math.toRadians(-90),1,0,0);
     }
     public void makeVertexs(){
         for (int i = 0; i < 6; i++) {
@@ -116,7 +99,7 @@ public class Hex extends Canvas implements Renderable{
         }
     }
     public int gather(){
-        if (type!=resource.Desert || this.equals(isRobberBaroned)){
+        if (type!=resource.Desert || this.equals(RobberBaronedHex)){
             for (int i = 0; i < buildings.length; i++) {
                 buildings[i].gather(type);
             }
@@ -149,62 +132,58 @@ public class Hex extends Canvas implements Renderable{
     }
 
     static boolean roadRequirementOverride = false;
+    boolean townConstructionValid(Building building, Player owner){
+        //CHECK ADJACENT BUILDINGS
+        boolean goodRoad = roadRequirementOverride;
+        for (int i = 0; i < 3; i++) {
+            if (building.getRoads()[i]==null){
+                continue;
+            }
+            Building left=building.getRoads()[i].left, right=building.getRoads()[i].right;
+            if (goodRoad||building.getRoads()[i].owner==owner){
+                goodRoad=true;
+            }
+            if (left.type == Catan.BuildingOption.City || left.type == Catan.BuildingOption.Town)
+                return false;
+            if (right.type == Catan.BuildingOption.City || right.type == Catan.BuildingOption.Town)
+                return false;
+
+        }
+
+        //System.out.println("passed check 2");
+        return goodRoad;
+    }
     public boolean constructBuilding(HexBuilding vertex, Catan.BuildingOption option, Player owner){
         // moved building conditions in here cuase i needed to check them for both road vertexs
-        Building temp=buildings[vertex.index];
+        Building building=buildings[vertex.index];
         if (option != Catan.BuildingOption.Road)
             System.out.println("called build "+option);
-        if (temp.owner != owner && temp.owner != null)
+        if (building.owner != owner && building.owner != null)
             return false;
         //System.out.println("passed check 1");
 
         //settlement
         if (option== Catan.BuildingOption.Town) {
 
-            //CHECK ADJACENT BUILDINGS
-            boolean goodRoad= roadRequirementOverride;
-            for (int i = 0; i < 3; i++) {
-                if (temp.getRoads()[i]==null){
-                    continue;
-                }
-                Building left=temp.getRoads()[i].left, right=temp.getRoads()[i].right;
-                if (goodRoad||temp.getRoads()[i].owner==owner){
-                    goodRoad=true;
-                }
-                if (left.type == Catan.BuildingOption.City || left.type == Catan.BuildingOption.Town)
-                    return false;
-                if (right.type == Catan.BuildingOption.City || right.type == Catan.BuildingOption.Town)
-                    return false;
-
-            }
-
-            //System.out.println("passed check 2");
-            if (!goodRoad)
+            if (!townConstructionValid(building, owner))
                 return false;
-
             //System.out.println("passed check 3");
-            temp.resourcegain = 1;
-            temp.type = option;
-            temp.owner=owner;
+            building.resourcegain = 1;
+            building.type = option;
+            building.owner=owner;
             return true;
         }
         //city
         if (option== Catan.BuildingOption.City){
-            if (temp.type != Catan.BuildingOption.Town)
+            if (building.type != Catan.BuildingOption.Town)
                 return false;
-            temp.resourcegain = 2;
-            temp.type = option;
-            temp.owner=owner;
+            building.resourcegain = 2;
+            building.type = option;
+            building.owner=owner;
 
             return true;
         }
-//
-//        if (option== Catan.BuildingOption.Road){
-//
-//            temp.type = option;
-//            temp.owner=owner;
-//            return true;
-//        }
+
         return false;
     }
 

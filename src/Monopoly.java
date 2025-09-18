@@ -9,18 +9,18 @@ public class Monopoly extends DevelopmentCard{
         for (Card<Hex.resource> c : PortHolder.defaultInventory(1))
             port.addPermanent(c);
         instance.openTradingInventory(port);
-        StartBuildThread(instance);
+        StartUseThread(instance);
     }
-    private void StartBuildThread(Catan instance){
+    private void StartUseThread(Catan instance){
         try {
             //System.out.println("start build");
             new Thread( () -> {
-                Build(instance);
+                Use(instance);
             }).start();
 
         } catch (Exception e){}
     }
-    private void Build(Catan instance){
+    private void Use(Catan instance){
         Player turnPlayer = instance.turnPlayer;
 
         instance.currentPhase = Catan.Phase.Rolling;
