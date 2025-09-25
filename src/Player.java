@@ -57,18 +57,18 @@ public class Player implements Renderable2d {
     public void Playercreate(String name){
         this.name=name;
         UIElements.add(DevelopmentCards);
-        DevelopmentCards.position = new Vector3f(-0.4f,-0.4f,1f);
+        DevelopmentCards.position = new Vector3f(-0.4f,-0.4f,2f);
         DevelopmentCards.len = 0.4f;
 
         UIElements.add(ResourceCards);
-        ResourceCards.position = new Vector3f(0.8f,-0.8f,1f);
+        ResourceCards.position = new Vector3f(0.8f,-0.8f,2f);
 
         UIElements.add(TradingCards);
-        TradingCards.position = new Vector3f(0.8f,0.8f,1f);
+        TradingCards.position = new Vector3f(0.8f,0.8f,2f);
         TradingCards.rotation = (float) Math.toRadians(180f);
 
         UIElements.add(OpenTrade);
-        OpenTrade.position = new Vector3f(0,0,1);
+        OpenTrade.position = new Vector3f(0,0,2);
 
 
         for (int i = 0; i < 4; i++){
@@ -99,16 +99,16 @@ public class Player implements Renderable2d {
 
         }
     }
-    boolean payCheck(int a, int b, int c, int d, int e){
-        if (ResourceCards.count(Hex.resource.values()[0]) < a)
+    boolean payCheck(int Brick, int Grain, int Rock, int Wood, int Wool){
+        if (ResourceCards.count(Hex.resource.values()[0]) < Brick)
             return false;
-        if (ResourceCards.count(Hex.resource.values()[1]) < b)
+        if (ResourceCards.count(Hex.resource.values()[1]) < Grain)
             return false;
-        if (ResourceCards.count(Hex.resource.values()[2]) < c)
+        if (ResourceCards.count(Hex.resource.values()[2]) < Rock)
             return false;
-        if (ResourceCards.count(Hex.resource.values()[3]) < d)
+        if (ResourceCards.count(Hex.resource.values()[3]) < Wood)
             return false;
-        if (ResourceCards.count(Hex.resource.values()[4]) < e)
+        if (ResourceCards.count(Hex.resource.values()[4]) < Wool)
             return false;
         return true;
     }
@@ -127,8 +127,8 @@ public class Player implements Renderable2d {
             case City -> pay(0,2,3,0,0);
         }
     }
-    void pay(int a, int b, int c, int d, int e){
-        int[] ar = {a,b,c,d,e};
+    void pay(int Brick, int Grain, int Rock, int Wood, int Wool){
+        int[] ar = {Brick, Grain, Rock, Wood, Wool};
         for (int i = 0; i < 5; i++)
             for (int j = 0; j < ar[i]; j++)
                 ResourceCards.remove(Hex.resource.values()[i]);

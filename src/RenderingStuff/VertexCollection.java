@@ -1,7 +1,10 @@
 package RenderingStuff;
 
+import org.joml.Intersectionf;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.stb.STBImage;
 
 import java.nio.*;
@@ -91,9 +94,30 @@ public class VertexCollection {
         glBindVertexArray(MeshArray);
         glDrawElements(GL_TRIANGLES,elementData.length,GL_UNSIGNED_INT,0);
     }
+    public float rayIntersects(Vector3f position, Vector3f ray, Matrix4f modelSpace){
+        float out = Float.MAX_VALUE;
+        boolean flag = true;
+        for (int i = 0; i < elementData.length; i += 3){
+            Vector3f[] verts = new Vector3f[3];
+            for (int j = 0; j < 3; j++) {
+                int ind = elementData[i + j] * 3;
+                Vector4f v = new Vector4f(vertexData[ind + 0], vertexData[ind + 1], vertexData[ind + 2], 1f);
+                v.mul(modelSpace);
+                //System.out.println(v);
+                verts[j] = new Vector3f(v.x,v.y,v.z);
+            }
 
-    public boolean rayIntersects(Vector3f position, Vector3f ray){ // TODO
-        return false;
+            float res = Intersectionf.intersectRayTriangle(position,ray,verts[0], verts[1], verts[2],0.01f);
+//            System.out.println("ray:"+position+" "+ray+" ");
+//            System.out.println("vertexs:"+verts[0]+" "+verts[1]+" "+verts[2]);
+            if (res >= 0){
+                out = Math.min(out, res);
+                flag = false;
+            }
+        }
+        if (flag)
+            return -1;
+        return out;
     }
 
 

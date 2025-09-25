@@ -17,7 +17,7 @@ public class RoadBuilding extends DevelopmentCard{
     }
     private void BuildRoads(Catan instance){
 
-        instance.currentPhase = Catan.Phase.Rolling;
+        instance.currentPhase = Catan.Phase.SetUp;
 
         Player turnPlayer = instance.turnPlayer;
         for (int i = 0; i < 2; i++) {

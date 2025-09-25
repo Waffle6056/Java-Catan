@@ -23,7 +23,7 @@ public class Monopoly extends DevelopmentCard{
     private void Use(Catan instance){
         Player turnPlayer = instance.turnPlayer;
 
-        instance.currentPhase = Catan.Phase.Rolling;
+        instance.currentPhase = Catan.Phase.SetUp;
 
         Hex.resource r = instance.selectResource();
         instance.robber.robAllResource(r);

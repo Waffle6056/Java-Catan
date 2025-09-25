@@ -22,7 +22,7 @@ public class RobberBaron implements Renderable, Renderable2d{
         meshNotifier.position.add(1f,0f,-1f);
     }
     public void moveRobberBaron(){
-        instance.currentPhase = Catan.Phase.Rolling;
+        instance.currentPhase = Catan.Phase.SetUp;
         meshNotifier.position.add(0f,0f,2f);
         try {
             //System.out.println("start build");
@@ -54,7 +54,7 @@ public class RobberBaron implements Renderable, Renderable2d{
                         victims.add(victim);
                     }
                 instance.turnPlayer.OpenTrade.clear();
-                if (instance.currentPhase == Catan.Phase.Rolling)
+                if (instance.currentPhase == Catan.Phase.SetUp)
                     instance.currentPhase = Catan.Phase.BuildingTrading;
             }).start();
 

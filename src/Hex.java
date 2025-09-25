@@ -21,7 +21,7 @@ public class Hex extends Canvas implements Renderable{
 
     enum resource{
         Brick(0, "HexMeshes/Hills.fbx","CatanCardMeshes/Resource/CardBrick.fbx"),
-        Grain(1, "HexMeshes/Mountains.fbx","CatanCardMeshes/Resource/CardGrain.fbx"),
+        Grain(1, "HexMeshes/Field.fbx","CatanCardMeshes/Resource/CardGrain.fbx"),
         Rock(2, "HexMeshes/Mountains.fbx","CatanCardMeshes/Resource/CardOre.fbx"),
         Wood(3, "HexMeshes/Forest.fbx","CatanCardMeshes/Resource/CardLumber.fbx"),
         Wool(4, "HexMeshes/Plains.fbx","CatanCardMeshes/Resource/CardWool.fbx"),

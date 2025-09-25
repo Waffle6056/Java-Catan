@@ -57,9 +57,10 @@ public class CardHolder<E> implements Renderable2d {
         if (!Cards.contains(card))
             return;
         Cards.remove(card);
+        CardsSelected.remove(card);
         Counts.put(card.data, Counts.getOrDefault(card.data,0)-1);
         card.selected = false;
-        CardsSelected.remove(card);
+        setInd(ind);
     }
     public void removeAll(List<Card<E>> cards){
         for (int i = cards.size()-1; i >= 0; i--)
@@ -79,12 +80,13 @@ public class CardHolder<E> implements Renderable2d {
     }
     public void setInd(int i){
         ind = i;
+        if (Cards.size() > 0)
+            ind = Math.floorMod(ind, Cards.size());
     }
     public void scroll(int delta){
         if (Cards.size() == 0)
             return;
-        ind += delta;
-        ind = Math.floorMod(ind, Cards.size());
+        setInd(ind + delta);
     }
     public Card<E> current(){
         if (Cards.size() == 0 || ind < 0 || ind >= Cards.size())
@@ -120,7 +122,7 @@ public class CardHolder<E> implements Renderable2d {
         ind = Math.max(0, Math.min(Cards.size()-1, ind));
         for (int i = 0; i < Cards.size(); i++){
             if (Cards.get(i).mesh != null) {
-                Vector3f c = new Vector3f(position);
+                Vector3f c = new Vector3f(position).add(0,0,i*.2f);
 
                 int midDiff = i-ind;
                 float angle = (float)Math.toRadians(Math.min(180f/Cards.size(), 180f/7f)) * midDiff;

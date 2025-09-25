@@ -124,9 +124,8 @@ public class Shader {
 
     }
 
-    public void setWorldSpace(Vector3f position, Quaternionf rotation, Vector3f scale){
+    public void setWorldSpace(Matrix4f modelMat){
         int modelLoc = glGetUniformLocation(shaderProgram, "model");
-        Matrix4f modelMat = new Matrix4f().translationRotateScale(position,rotation,scale);
         glUniformMatrix4fv(modelLoc,false,modelMat.get(new float[16]));
 
         int normLoc = glGetUniformLocation(shaderProgram, "normalMat");

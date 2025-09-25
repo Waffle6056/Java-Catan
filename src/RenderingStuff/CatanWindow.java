@@ -6,6 +6,7 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.*;
 
+import java.lang.Math;
 import java.nio.*;
 import java.util.ArrayList;
 
@@ -164,7 +165,10 @@ public class CatanWindow {
     // the only collision in the scene will be the xz plane
     public Vector3f getMousePos(){
         Vector3f camPos = camera.camPos;
-        Vector3f dir = camera.getMouseVector(this).normalize();
+        Vector3f mousePos = camera.getMouseVector(this);
+        Vector3f dir = mousePos.sub(camPos);
+        //System.out.println(dir);
+
 
         float res = Intersectionf.intersectRayPlane(camPos, dir, new Vector3f(0,1,0), new Vector3f(0,1,0),camera.epsilon);
         Vector3f out = new Vector3f(camPos).add(dir.mul(res, new Vector3f()));
@@ -172,12 +176,36 @@ public class CatanWindow {
         return out;
     }
     public Vector3f getMousePos2d(){
-        Vector3f camPos = camera2d.camPos;
-        Vector3f dir = camera2d.getMouseVector(this);
+        //Vector3f camPos = camera.camPos;
+        //Vector3f dir =
         //System.out.println(camPos+" "+dir);
         //System.out.println(res+" "+out);
-        return camPos.add(dir, new Vector3f());
+        //System.out.println(dir);
+        Vector3f mousePos = camera2d.getMouseVector(this);
+        //System.out.println(res);
+        //System.out.println(mousePos.add(camera2d.camDir.mul(res, new Vector3f()), new Vector3f()));
+        //System.out.println(mousePos);
+        return mousePos;
     }
+    public float hovered2D(Mesh m){
+        //System.out.println(camera2d.camDir);
+        return m.rayIntersects(getMousePos2d(), camera2d.camDir);
+    }
+//    public Vector3f getMousePos2d(){
+//        Vector3f camPos = camera2d.camPos;
+//        Vector3f dir = camera2d.getMouseVector(this);
+//        //System.out.println(camPos+" "+dir);
+//        //System.out.println(res+" "+out);
+//        float out = Float.MAX_VALUE;
+//        for (Mesh m : meshes2d) {
+//            float res = m.rayIntersects(camPos, dir);
+//            if (res >= 0)
+//                out = Math.min(res, out);
+//
+//        }
+//        System.out.println(camPos.add(dir.mul(out, new Vector3f())));
+//        return camPos.add(dir.mul(out, new Vector3f()));
+//    }
 
 
 //    glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {

@@ -1,5 +1,6 @@
 package RenderingStuff;
 
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.assimp.AIMaterial;
@@ -17,6 +18,8 @@ public class Mesh {
     public Vector3f position = new Vector3f(0,0,0);
     public Quaternionf rotation = new Quaternionf();
     public Vector3f scale = new Vector3f(1,1,1);
+
+    public String file="";
     public Mesh(String filePath){
         importData(filePath);
     }
@@ -25,6 +28,7 @@ public class Mesh {
     }
 
     void importData(String filePath){
+        file = filePath;
         if (vcMap.containsKey(filePath)) {
             pieces = vcMap.get(filePath);
             materials = matMap.get(filePath);
@@ -46,17 +50,30 @@ public class Mesh {
         matMap.put(filePath, materials);
 
     }
+
     public void draw(Shader shader){
-        shader.setWorldSpace(position, rotation, scale);
+        shader.setWorldSpace(modelMatrix());
         for (VertexCollection p : pieces) {
             materials.get(p.MaterialIndex).enable();
             p.drawVertices(shader);
         }
     }
-    public boolean rayIntersects(Vector3f position, Vector3f ray){
-        for (VertexCollection piece : pieces)
-            if (piece.rayIntersects(position,ray))
-                return true;
-        return false;
+    Matrix4f modelMatrix(){
+        return new Matrix4f().translationRotateScale(position,rotation,scale);
+    }
+    public float rayIntersects(Vector3f rayPosition, Vector3f ray){
+        float out = Float.MAX_VALUE;
+        boolean flag = true;
+        //System.out.println(file);
+        for (VertexCollection piece : pieces) {
+            float res = piece.rayIntersects(rayPosition, ray, modelMatrix());
+            if (res >= 0) {
+                out = Math.min(res, out);
+                flag = false;
+            }
+        }
+        if (flag)
+            return -1;
+        return out;
     }
 }

@@ -26,7 +26,12 @@ public abstract class DevelopmentCard {// NOT A CARD CHILD JUST SAME NAME
             deck.add((int)(Math.random()*deck.size()), deck.pop());
     }
 
+    public static boolean empty() {
+        return deck.empty();
+    }
     public static DevelopmentCard createNew(){
-       return deck.pop();
+        if (DevelopmentCard.empty())
+            return null;
+        return deck.pop();
     }
 }

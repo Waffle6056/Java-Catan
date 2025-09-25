@@ -110,10 +110,12 @@ public class Camera {
 //        Vector4f screenVector = new Vector4f(xPercent*worldScreenHeight, yPercent*worldScreenHeight, -w, 0);
         Vector4f homogenuousClipCoord = new Vector4f(xPercent,yPercent,-1.0f,1.0f);
         Vector4f screenVector = homogenuousClipCoord.mul(projection.invert(new Matrix4f()));
-        screenVector = new Vector4f(screenVector.x, screenVector.y, -1.0f, 0.0f);
+        screenVector = new Vector4f(screenVector.x, screenVector.y, -1.0f, 1.0f);
         //screenVector = screenVector.normalize();
 
+        //System.out.println(screenVector);
         screenVector.mul(viewMatrix().invert());
+        //System.out.println(screenVector);
 
         return new Vector3f(screenVector.x, screenVector.y, screenVector.z);
     }
