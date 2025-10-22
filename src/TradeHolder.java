@@ -1,6 +1,9 @@
 import java.util.List;
 
 public class TradeHolder<E> extends CardHolder<E>{
+    public TradeHolder(Player owner, int visibilityLayers) {
+        super(owner,visibilityLayers);
+    }
     public TradeHolder(Player owner) {
         super(owner);
     }

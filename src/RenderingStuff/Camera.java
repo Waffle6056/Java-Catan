@@ -66,6 +66,7 @@ public class Camera {
 //            camPos.sub(up.mul(cameraSpeed, tmp));
         //boundary();
 
+        shader.enable();
         shader.setUniform("projection",projection);
         shader.setUniform("view", viewMatrix());
         shader.setUniform("viewPos", camPos);

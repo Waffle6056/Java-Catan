@@ -1,13 +1,11 @@
 package RenderingStuff;
 
-import org.joml.Intersectionf;
-import org.joml.Matrix4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
 import org.lwjgl.stb.STBImage;
 
+import java.lang.Math;
 import java.nio.*;
+import java.util.Arrays;
 
 import org.lwjgl.assimp.*;
 
@@ -18,13 +16,45 @@ public class VertexCollection {
 
     public int MeshArray, MaterialIndex;
     int vertexBuffer, normalBuffer, textureUVBuffer, elementBuffer;
-    float[] vertexData, normalData, textureUVData;
+    public float[] vertexData, normalData, textureUVData;
     int[] elementData;
     public VertexCollection(AIMesh mesh){
         loadData(mesh);
     }
-    public VertexCollection(){
+    public VertexCollection() {
 
+    }
+    // builds a quad for the character
+    public VertexCollection(CharacterTexture characterTexture, int ind, float xOffset){
+        Vector2f origin = characterTexture.Bearing;
+        Vector2f size = characterTexture.Size;
+        float[] x = new float[]{0,1,0,1};
+        float[] y = new float[]{1,1,0,0};
+        vertexData = new float[4*3];
+        normalData = new float[4*3];
+        textureUVData = new float[4*2];
+
+        for (int i = 0; i < 4; i++){
+            vertexData[i*3+0] = (-origin.x - size.x * x[i]) + xOffset;
+            vertexData[i*3+1] = (origin.y - size.y * y[i]);
+            vertexData[i*3+2] = 0;
+
+            normalData[i*3+0] = 0;
+            normalData[i*3+1] = 0;
+            normalData[i*3+2] = -1f; // potential issue'
+
+            textureUVData[i*2+0] = x[i]; // potential issue
+            textureUVData[i*2+1] = y[i]; // potential issue
+        }
+
+        //System.out.println(Arrays.toString(vertexData));
+        elementData = new int[]{
+                0,1,2,
+                1,3,2
+        };
+
+        MaterialIndex = ind;
+        initializeArray();
     }
     void loadData(AIMesh mesh){
         int numVertices = mesh.mNumVertices();
@@ -65,8 +95,7 @@ public class VertexCollection {
         //normalData = new float[mesh.mNor]
         initializeArray();
     }
-    int saveData(int index, int size, float[] data){
-        int dataBuffer = glGenBuffers();
+    int saveData(int dataBuffer, int index, int size, float[] data){
         glBindBuffer(GL_ARRAY_BUFFER, dataBuffer);
         glBufferData(GL_ARRAY_BUFFER,data,GL_DYNAMIC_DRAW);
         glEnableVertexAttribArray(index);
@@ -77,13 +106,13 @@ public class VertexCollection {
         MeshArray = glGenVertexArrays();
         glBindVertexArray(MeshArray);
 
-        saveData(0,3,vertexData);
-        saveData(1,3,normalData);
-        saveData(2,2,textureUVData);
+        vertexBuffer = saveData(glGenBuffers(),0,3,vertexData);
+        normalBuffer = saveData(glGenBuffers(),1,3,normalData);
+        textureUVBuffer = saveData(glGenBuffers(),2,2,textureUVData);
 
 
-        int indexBuffer = glGenBuffers();
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,indexBuffer);
+        elementBuffer = glGenBuffers();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,elementBuffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,elementData,GL_DYNAMIC_DRAW);
 
         glBindVertexArray(0);

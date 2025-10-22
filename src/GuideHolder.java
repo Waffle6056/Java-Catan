@@ -24,7 +24,6 @@ public class GuideHolder<E> extends CardHolder<E>{
         // playerCards.get(instance.turnInd).HighLight.position = c.add(0, 0, 0.005f, new Vector3f());
         // Cards.add(playerCards.get(instance.turnInd));
         this.instance=instance;
-        visible = false;
         // Cards.get(1).selected=true;
     }
 

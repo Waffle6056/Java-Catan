@@ -3,17 +3,23 @@ package RenderingStuff;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.assimp.AIMaterial;
 import org.lwjgl.assimp.AIMesh;
 import org.lwjgl.assimp.AIScene;
 import org.lwjgl.assimp.Assimp;
+import org.lwjgl.system.MemoryStack;
+
 
 import java.util.*;
+
+import static org.lwjgl.opengl.GL30C.glBindVertexArray;
+import static org.lwjgl.system.MemoryStack.stackPush;
 
 public class Mesh {
     static HashMap<String, List<VertexCollection>> vcMap = new HashMap<>();
     static HashMap<String, List<Material>> matMap = new HashMap<>();
-    List<VertexCollection> pieces = new ArrayList<>();
+    public List<VertexCollection> pieces = new ArrayList<>();
     public List<Material> materials = new ArrayList<>();
     public Vector3f position = new Vector3f(0,0,0);
     public Quaternionf rotation = new Quaternionf();
@@ -26,7 +32,30 @@ public class Mesh {
     public Mesh(String filePath, Vector3f position, Quaternionf rotation, Vector3f scale){
         importData(filePath);
     }
-
+    public Mesh(String text, float spacingScale){
+        if (vcMap.containsKey(text)){
+            pieces = vcMap.get(text);
+            materials = matMap.get(text);
+            return;
+        }
+        //System.out.println(1);
+        int textLen = text.length();
+        float xOffset = 0;
+        for (int cInd = 0; cInd < textLen; cInd++) {
+            char c = text.charAt(cInd);
+            CharacterTexture characterTexture = Text.Map.get(c);
+            //System.out.println(2);
+            VertexCollection current = new VertexCollection(characterTexture,cInd,xOffset);
+            //System.out.println(3);
+            //System.out.println(xOffset);
+            xOffset -= (characterTexture.Advance >> 6);
+            pieces.add(current);
+            materials.add(new Material(characterTexture));
+        }
+        //System.out.println(4);
+        vcMap.put(text, pieces);
+        matMap.put(text, materials);
+    }
     void importData(String filePath){
         file = filePath;
         if (vcMap.containsKey(filePath)) {
@@ -48,17 +77,17 @@ public class Mesh {
 
         vcMap.put(filePath, pieces);
         matMap.put(filePath, materials);
-
     }
 
     public void draw(Shader shader){
+        shader.enable();
         shader.setWorldSpace(modelMatrix());
         for (VertexCollection p : pieces) {
             materials.get(p.MaterialIndex).enable();
             p.drawVertices(shader);
         }
     }
-    Matrix4f modelMatrix(){
+    public Matrix4f modelMatrix(){
         return new Matrix4f().translationRotateScale(position,rotation,scale);
     }
     public float rayIntersects(Vector3f rayPosition, Vector3f ray){

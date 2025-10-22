@@ -7,146 +7,211 @@ public class CardHolder<E> implements Renderable2d {
     List<Card<E>> Cards = new ArrayList<>();
     int ind = 0;
     List<Card<E>> CardsSelected = new ArrayList<>();
-    boolean visible = true;
     Player owner;
-    public Vector3f position = new Vector3f(0,0,0);
-    public Vector3f scale = new Vector3f(2,2,2);
+    public Vector3f position = new Vector3f(0, 0, 0);
+    public Vector3f scale = new Vector3f(2, 2, 2);
 
     public float rotation = 0;
     public float len = .2f;
     HashMap<E, Integer> Counts = new HashMap<>();
-    public CardHolder(Player owner){
+    public CardPositioner cardPositioner = CardHolder::setCircularTransforms;
+    int VisibilityLayers = 0;
+    enum VisibilityLayer{
+        Building(1),
+        Trading(2),
+        DevelopmentCard(4);
+        int bit;
+        VisibilityLayer(int bit){
+            this.bit = bit;
+        }
+    }
+    public CardHolder(Player owner, int visibilityLayers) {
+        this.owner = owner;
+        this.VisibilityLayers = visibilityLayers;
+    }
+
+    public CardHolder(Player owner) {
         this.owner = owner;
     }
-    public Card<E> add(Card<E> card){
+
+    public Card<E> add(Card<E> card) {
         Cards.add(card);
-        Counts.put(card.data, Counts.getOrDefault(card.data,0)+1);
+        Counts.put(card.data, Counts.getOrDefault(card.data, 0) + 1);
         return card;
     }
 
-    public Card<E> add(E data){
+    public Card<E> add(E data) {
         return add(new Card<>(data));
     }
-    public Card<E> add(E data, String meshFile){
+
+    public Card<E> add(E data, String meshFile) {
         return add(new Card<>(data, meshFile));
     }
-    public Card<E> get(int i){
+
+    public Card<E> get(int i) {
         return Cards.get(i);
     }
-    public void addAll(CardHolder<E> other){
+
+    public void addAll(CardHolder<E> other) {
         for (Card<E> c : other.Cards)
             add(c);
     }
+
     public void addAll(List<Card<E>> other) {
         for (Card<E> c : other)
             add(c);
     }
-    public int count(E Data){
-        return Counts.getOrDefault(Data,0);
+
+    public int count(E Data) {
+        return Counts.getOrDefault(Data, 0);
     }
-    public int indexOf(E Data){
+
+    public int indexOf(E Data) {
         for (int i = 0; i < Cards.size(); i++)
             if (Cards.get(i).data.equals(Data))
                 return i;
         return -1;
     }
+
     public void remove(E data) {
         remove(Cards.get(indexOf(data)));
     }
-    public void remove(Card<E> card){
+
+    public void remove(Card<E> card) {
         if (!Cards.contains(card))
             return;
         Cards.remove(card);
         CardsSelected.remove(card);
-        Counts.put(card.data, Counts.getOrDefault(card.data,0)-1);
+        Counts.put(card.data, Counts.getOrDefault(card.data, 0) - 1);
         card.selected = false;
         setInd(ind);
     }
-    public void removeAll(List<Card<E>> cards){
-        for (int i = cards.size()-1; i >= 0; i--)
+
+    public void removeAll(List<Card<E>> cards) {
+        for (int i = cards.size() - 1; i >= 0; i--)
             remove(cards.get(i));
     }
 
-    public void trade(CardHolder<E> other){
+    public void trade(CardHolder<E> other) {
         addAll(other.CardsSelected);
         other.addAll(CardsSelected);
 
         removeAll(CardsSelected);
         other.removeAll(other.CardsSelected);
     }
-    public void clear(){
+
+    public void clear() {
         Cards.clear();
         CardsSelected.clear();
     }
-    public void setInd(int i){
+
+    public void setInd(int i) {
         ind = i;
         if (Cards.size() > 0)
             ind = Math.floorMod(ind, Cards.size());
     }
-    public void scroll(int delta){
+
+    public void scroll(int delta) {
         if (Cards.size() == 0)
             return;
         setInd(ind + delta);
     }
-    public Card<E> current(){
+
+    public Card<E> current() {
         if (Cards.size() == 0 || ind < 0 || ind >= Cards.size())
             return null;
         return Cards.get(ind);
     }
-    public void select(boolean val){
+
+    public void select(boolean val) {
         if (!Cards.isEmpty() && (val && !current().selected || !val && current().selected))
             select();
     }
-    public void select(){
+
+    public void select() {
         if (Cards.size() == 0)
             return;
         Card<E> Current = Cards.get(ind);
         Current.selected = !Current.selected;
         if (Current.selected) {
             CardsSelected.add(Current);
-        }
-        else {
+        } else {
             CardsSelected.remove(Current);
         }
     }
 
-    public void toggleVisible(){
-        visible = !visible;
+    @FunctionalInterface
+    interface CardPositioner {
+        public void SetTransforms(List<Card> Cards, Vector3f position, float rotation, Vector3f scale, int ind, float len);
     }
-    public void toggleVisible(boolean val){
-        if (val && !visible || !val && visible)
-            toggleVisible();
-    }
-    public void setTransforms(){
-        //System.out.println(current().data+" "+ind);
-        ind = Math.max(0, Math.min(Cards.size()-1, ind));
-        for (int i = 0; i < Cards.size(); i++){
-            if (Cards.get(i).mesh != null) {
-                Vector3f c = new Vector3f(position).add(0,0,i*.2f);
 
-                int midDiff = i-ind;
-                float angle = (float)Math.toRadians(Math.min(180f/Cards.size(), 180f/7f)) * midDiff;
-                float len = this.len;
+    public static void setCircularTransforms(List<Card> Cards, Vector3f position, float rotation, Vector3f scale, int ind, float len) {
+        //System.out.println(current().data+" "+ind);
+        ind = Math.max(0, Math.min(Cards.size() - 1, ind));
+        for (int i = 0; i < Cards.size(); i++) {
+            if (Cards.get(i).mesh != null) {
+                Vector3f c = new Vector3f(position).add(0, 0, i * .2f);
+
+                int midDiff = i - ind;
+                float angle = (float) Math.toRadians(Math.min(180f / Cards.size(), 180f / 7f)) * midDiff;
+                float distance = len;
                 if (midDiff == 0)
-                    len *= 2;
-                Vector3f rotated = new Vector3f(0,len,0).rotateZ(angle + rotation);
+                    distance *= 2;
+                Vector3f rotated = new Vector3f(0, distance, 0).rotateZ(angle + rotation);
                 c.add(rotated);
 
                 //System.out.println(c);
 
                 Cards.get(i).mesh.position = c;
                 Cards.get(i).mesh.rotation = new Quaternionf();//.lookAlong(c,new Vector3f(0,1,0));
-                Cards.get(i).mesh.rotation.rotateLocalY((float)Math.toRadians(180)).rotateLocalX((float)Math.toRadians(90)).rotateLocalZ(angle + rotation);//.lookAlong(c,position);
+                Cards.get(i).mesh.rotation.rotateLocalY((float) Math.toRadians(180)).rotateLocalX((float) Math.toRadians(90)).rotateLocalZ(angle + rotation);//.lookAlong(c,position);
                 Cards.get(i).mesh.scale = scale;
 
-                if (Cards.get(i).HighLight != null){
-                    Cards.get(i).HighLight.position = c.add(0,0,0.02f, new Vector3f());
+                if (Cards.get(i).HighLight != null) {
+                    Cards.get(i).HighLight.position = c.add(0, 0, 0.02f, new Vector3f());
                     //System.out.println("HAS HIGHLIGHT "+Cards.get(i).HighLight.position);
                     Cards.get(i).HighLight.rotation = Cards.get(i).mesh.rotation;
-                    Cards.get(i).HighLight.scale = scale.add(.2f,.2f,.2f, new Vector3f());
+                    Cards.get(i).HighLight.scale = scale.add(.2f, .2f, .2f, new Vector3f());
                 }
             }
         }
+    }
+    public static void setLinearTransforms(List<Card> Cards, Vector3f position, float rotation, Vector3f scale, int ind, float len) {
+        //System.out.println(current().data+" "+ind);
+        ind = Math.max(0, Math.min(Cards.size() - 1, ind));
+        float zDistance = .2f; // arbitrary separation between card meshes
+        for (int i = 0; i < Cards.size(); i++) {
+            if (Cards.get(i).mesh != null) {
+                Vector3f c = new Vector3f(position).add(0, 0, i * zDistance);
+
+                int midDiff = i - ind;
+                float distance = len;
+                if (midDiff == 0)
+                    distance *= 2;
+                Vector3f rotated = new Vector3f(i*-len, distance, 0).rotateZ(rotation);
+                c.add(rotated);
+
+                //System.out.println(c);
+
+                Cards.get(i).mesh.position = c;
+                Cards.get(i).mesh.rotation = new Quaternionf();//.lookAlong(c,new Vector3f(0,1,0));
+                Cards.get(i).mesh.rotation.rotateLocalY((float) Math.toRadians(180)).rotateLocalX((float) Math.toRadians(90)).rotateLocalZ(rotation);//.lookAlong(c,position);
+                Cards.get(i).mesh.scale = scale;
+
+                if (Cards.get(i).HighLight != null) {
+                    Cards.get(i).HighLight.position = c.add(0, 0, 0.02f, new Vector3f());
+                    //System.out.println("HAS HIGHLIGHT "+Cards.get(i).HighLight.position);
+                    Cards.get(i).HighLight.rotation = Cards.get(i).mesh.rotation;
+                    Cards.get(i).HighLight.scale = scale.add(.2f, .2f, .2f, new Vector3f());
+                }
+            }
+        }
+    }
+
+    public void setTransforms(){
+        List<Card> test = new ArrayList<>();
+        test.addAll(Cards);
+        cardPositioner.SetTransforms(test, position, rotation, scale, ind, len);
     }
     public void deselectAll(){
         for (int i = 0; i < Cards.size(); i++) {
@@ -167,8 +232,6 @@ public class CardHolder<E> implements Renderable2d {
     @Override
     public List<Mesh> toMesh2d() {
         ArrayList<Mesh> out = new ArrayList<>();
-        if (!visible)
-            return out;
         setTransforms();
         for (Card<E> c : Cards)
             out.addAll(c.toMesh());

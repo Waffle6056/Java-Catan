@@ -1,5 +1,6 @@
 import RenderingStuff.CatanWindow;
 import RenderingStuff.Mesh;
+import RenderingStuff.VertexCollection;
 import org.joml.*;
 import org.joml.Math;
 
@@ -34,13 +35,16 @@ public class Catan implements Renderable, Renderable2d{
             meshList.add(ocean);
         return meshList;
     }
+    Mesh test;
     public java.util.List<Mesh> toMesh2d(){
         java.util.List<Mesh> meshList = new ArrayList<>();
         meshList.addAll(turnPlayer.toMesh2d());
         meshList.addAll(robber.toMesh2d());
-        meshList.addAll(guideElement.toMesh2d());
-        if (die1 != null)
+        //meshList.addAll(guideElement.toMesh2d());
+        if (die1 != null) {
             meshList.add(die1);
+        }
+
         if (die2 != null)
             meshList.add(die2);
 
@@ -52,7 +56,7 @@ public class Catan implements Renderable, Renderable2d{
         Road,
         Town,
         City,
-        BuildingOption(){}
+        DevelopmentCard
     }
 
     Phase currentPhase = Phase.SetUp;
@@ -60,7 +64,6 @@ public class Catan implements Renderable, Renderable2d{
         SetUp,
         BuildingTrading,
         Nothing,
-        Phase(){}
     }
 
 
@@ -225,6 +228,13 @@ public class Catan implements Renderable, Renderable2d{
             updateDiceVisual();
             Renderer.meshes = toMesh();
             Renderer.meshes2d = toMesh2d();
+            Renderer.textMeshes2d = new ArrayList<>();
+            if (test == null) {
+                test = new Mesh("giasfelfebrehber",.005f);
+                test.position = new Vector3f(0,0,1);
+                test.scale = new Vector3f(.005f,.005f,.005f);
+            }
+            Renderer.textMeshes2d.add(test);
 
             Renderer.update(delta);
             //Renderer.getMousePos();
@@ -245,6 +255,7 @@ public class Catan implements Renderable, Renderable2d{
         turnInd = (turnInd+1)%players.size();
         turnPlayer = players.get(turnInd);
         turnPlayer.developmentCardLimit = 1;
+        turnPlayer.ActiveVisibilityLayer = CardHolder.VisibilityLayer.Building.bit;
         for (Card<DevelopmentCard> c : turnPlayer.DevelopmentCards.Cards)
             c.data.enabled = true;
 
@@ -269,45 +280,19 @@ public class Catan implements Renderable, Renderable2d{
     double acuYPos = 0;
     void MouseWheelBinds(long win, double xpos, double ypos){
         //System.out.println(ypos);
-        if (hovered != null) {
+        UIElementPair hovered = selectUIElement();
+        if (hovered.container  != null) {
             acuYPos += ypos;
-            hovered.scroll((int) (acuYPos) / 2);
+            hovered.container.scroll((int) (acuYPos) / 2);
             acuYPos %= 2;
         }
         else
             Renderer.camera.scrollMovement(win,xpos,ypos);
     }
     void CursorMovementBinds(long win, double xpos, double ypos){
-        UpdatedHoveredElement(win,xpos,ypos);
         Renderer.camera.cursorMovement(win,xpos,ypos);
     }
 
-    CardHolder hovered;
-    void UpdatedHoveredElement(long win, double xpos, double ypos){
-        Vector3f pos = Renderer.getMousePos2d();
-        pos.z = 0;
-        float minDistance = Float.MAX_VALUE;
-        CardHolder currentElement = null;
-        for (Card<CardHolder> c : turnPlayer.UIElements.Cards){
-            CardHolder d = c.data;
-            //System.out.println(d+" "+pos+" "+);
-
-            float elementDistance = new Vector3f(d.position.x, d.position.y, 0).distance(pos);
-            if (elementDistance < minDistance){
-                minDistance = elementDistance;
-                currentElement = d;
-            }
-        }
-
-        float maxDistanceThreshold = 0.2f;
-        //System.out.println(minDistance+" "+currentElement.position);
-        if (minDistance < maxDistanceThreshold){
-            //System.out.println(currentElement);
-            hovered = currentElement;
-        }
-        else
-            hovered = null;
-    }
     void uiInteract(CardHolder c){
         if (c == turnPlayer.ResourceCards && turnPlayer.ResourceCards.current() != null)
             selectCurrentResourceCard();
@@ -317,6 +302,10 @@ public class Catan implements Renderable, Renderable2d{
             useDevelopmentCard();
         else if (c == turnPlayer.TradingCards && turnPlayer.TradingCards.current() != null)
             openTradingInventory();
+        else if (c == turnPlayer.VisibilityCards && turnPlayer.VisibilityCards.current() != null)
+            setVisibilityLayer();
+        else if (c == turnPlayer.BuildingCards && turnPlayer.BuildingCards.current() != null)
+            buildBuilding();
     }
     void selectAndInteract(){
         UIElementPair hoveredPair = selectUIElement();
@@ -329,66 +318,33 @@ public class Catan implements Renderable, Renderable2d{
             container.scroll(1);
         uiInteract(container);
     }
-    void selectAndToggleVisibility(){
-        UIElementPair hoveredPair = selectUIElement();
-        CardHolder container = hoveredPair.container;
-        if (container != null)
-            container.toggleVisible();
-    }
+
 
     void MouseButtonBind(long win, int button, int action, int mods){
         if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && currentPhase == Phase.BuildingTrading)
             selectAndInteract();
-        if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
-            selectAndToggleVisibility();
+
     }
-    void swapNextVisibleUiElement(){
-        int ind = 0;
-        do {
-            turnPlayer.UIElements.select(false);
-            turnPlayer.UIElements.scroll(1); // scroll ui elements
-            turnPlayer.UIElements.select(true);
-            ind++;
-        } while (!turnPlayer.UIElements.current().data.visible && ind < turnPlayer.UIElements.Cards.size());
-        turnPlayer.UIElements.toggleVisible(true);
-        //System.out.println(turnPlayer.UIElements.getMeshes().size());
-//                    System.out.println(turnPlayer.UIElements.current().data.current().data);
-    }
+
     void RollingPhaseKeybinds(int key){
         switch (key) {
             case GLFW_KEY_Z:
-                turnPlayer.DevelopmentCards.toggleVisible();
+                //turnPlayer.DevelopmentCards.toggleVisible();
+                turnPlayer.ActiveVisibilityLayer = CardHolder.VisibilityLayer.DevelopmentCard.bit;
                 break;
 
             case GLFW_KEY_X:
-                turnPlayer.ResourceCards.toggleVisible();
+                //turnPlayer.ResourceCards.toggleVisible();
+                turnPlayer.ActiveVisibilityLayer = CardHolder.VisibilityLayer.Building.bit;
                 break;
 
             case GLFW_KEY_C:
-                turnPlayer.TradingCards.toggleVisible();
-                break;
-
-            case GLFW_KEY_V:
-                turnPlayer.OpenTrade.toggleVisible();
-                break;
-
-            case GLFW_KEY_TAB:
-                swapNextVisibleUiElement();
-                break;
-
-            case GLFW_KEY_E:
-                turnPlayer.UIElements.current().data.scroll(1); // scroll current ui element
-                break;
-
-            case GLFW_KEY_Q:
-                turnPlayer.UIElements.current().data.scroll(-1);
+                //turnPlayer.TradingCards.toggleVisible();
+                turnPlayer.ActiveVisibilityLayer = CardHolder.VisibilityLayer.Trading.bit;
                 break;
 
             case GLFW_KEY_R:
-                if (turnPlayer.UIElements.current() == null)
-                    return;
-                uiInteract(turnPlayer.UIElements.current().data);
-                break;
+                selectAndInteract();
         }
     }
     void BuildingTradingPhaseKeybinds(int key) {
@@ -421,8 +377,6 @@ public class Catan implements Renderable, Renderable2d{
         Renderer.bindCallback((window, key, scancode, action, mods) -> {
             if (!justPressed(key))
                 return;
-            if (key == GLFW_KEY_GRAVE_ACCENT)
-                guideElement.toggleVisible();
 
             if (currentPhase == Phase.SetUp || currentPhase == Phase.BuildingTrading)
                 RollingPhaseKeybinds(key);
@@ -472,8 +426,9 @@ public class Catan implements Renderable, Renderable2d{
         CardHolder hoveredContainer = null;
         Card hoveredCard = null;
         float cur = 0;
-        for (Card<CardHolder> c : turnPlayer.UIElements.Cards){
-            CardHolder container = c.data;
+        for (CardHolder container : turnPlayer.UIElements){
+            if ((container.VisibilityLayers & turnPlayer.ActiveVisibilityLayer) == 0)
+                continue;
             List<Card> listCards = container.Cards;
             for (Card m : listCards) {
                 //Mesh m = meshes2d.get(0);
@@ -487,8 +442,8 @@ public class Catan implements Renderable, Renderable2d{
                 }
             }
         }
-        if (hoveredContainer != null)
-            System.out.println(hoveredContainer+" "+hoveredCard.mesh.file);
+//        if (hoveredContainer != null)
+//            System.out.println(hoveredContainer+" "+hoveredCard.mesh.file);
         return new UIElementPair(hoveredContainer,hoveredCard);
     }
     Hex selectHex(Vector3f mousePos){ // selects closest hex
@@ -610,6 +565,15 @@ public class Catan implements Renderable, Renderable2d{
     void openTradingInventory() {
         openTradingInventory(turnPlayer.TradingCards.current().data);
     }
+    void setVisibilityLayer(){
+        turnPlayer.ActiveVisibilityLayer = turnPlayer.VisibilityCards.current().data.bit; // selects current
+    }
+    void buildBuilding(){
+        if (turnPlayer.BuildingCards.current().data == BuildingOption.DevelopmentCard)
+            buyDevelopmentCard();
+        else
+            startBuildThread(turnPlayer.BuildingCards.current().data);
+    }
     void openTradingInventory(CardHolder<Hex.resource> inv){
 
         turnPlayer.OpenTrade.clear();
@@ -623,11 +587,8 @@ public class Catan implements Renderable, Renderable2d{
         turnPlayer.OpenTrade.Data = inv;
         turnPlayer.OpenTrade.addCopyOfAll(inv);
         turnPlayer.OpenTrade.owner = inv.owner;
-        turnPlayer.OpenTrade.toggleVisible(true);
     }
     void trade(CardHolder<Hex.resource> inv){
-        if (!turnPlayer.ResourceCards.visible)
-            return;
         inv.trade(turnPlayer.ResourceCards);
         Player other = inv.owner;
         if (other != null) {
@@ -656,11 +617,13 @@ public class Catan implements Renderable, Renderable2d{
     }
     void startBuildThread(BuildingOption Option){
         currentPhase = Phase.SetUp;
+        turnPlayer.ActiveVisibilityLayer = 0;
         try {
             //System.out.println("start build");
             new Thread( () -> {
                 Board.build(Option,turnPlayer,this);
                 currentPhase = Phase.BuildingTrading;
+                turnPlayer.ActiveVisibilityLayer = CardHolder.VisibilityLayer.Building.bit;
             }).start();
 
         } catch (Exception e){}

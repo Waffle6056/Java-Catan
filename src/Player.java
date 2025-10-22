@@ -1,16 +1,15 @@
 import RenderingStuff.Mesh;
 import org.joml.Vector3f;
-
 import java.util.*;
 
 public class Player implements Renderable2d {
     public java.util.List<Mesh> toMesh2d() {
         java.util.List<Mesh> meshList = new ArrayList<>();
-        meshList.addAll(UIElements.toMesh2d());
-        meshList.addAll(DevelopmentCards.toMesh2d());
-        meshList.addAll(ResourceCards.toMesh2d());
-        meshList.addAll(TradingCards.toMesh2d());
-        meshList.addAll(OpenTrade.toMesh2d());
+        for (CardHolder c : UIElements){
+            if ((c.VisibilityLayers & ActiveVisibilityLayer) > 0)
+                meshList.addAll(c.toMesh2d());
+
+        }
         return meshList;
     }
     enum ModelSet{
@@ -30,11 +29,15 @@ public class Player implements Renderable2d {
         }
     }
     String name;
-    CardHolder<CardHolder> UIElements = new CardHolder<>(this);
-    CardHolder<DevelopmentCard> DevelopmentCards = new CardHolder<>(this);
-    CardHolder<Hex.resource> ResourceCards = new CardHolder<>(this);
-    CardHolder<CardHolder<Hex.resource>> TradingCards = new CardHolder<>(this);
-    TradeHolder<Hex.resource> OpenTrade = new TradeHolder<>(this);
+    List<CardHolder> UIElements = new ArrayList<>();
+    CardHolder<CardHolder.VisibilityLayer> VisibilityCards = new CardHolder<>(this, CardHolder.VisibilityLayer.DevelopmentCard.bit | CardHolder.VisibilityLayer.Trading.bit | CardHolder.VisibilityLayer.Building.bit);
+    CardHolder<Catan.BuildingOption> BuildingCards = new CardHolder<>(this, CardHolder.VisibilityLayer.Building.bit);
+    CardHolder<DevelopmentCard> DevelopmentCards = new CardHolder<>(this, CardHolder.VisibilityLayer.DevelopmentCard.bit);
+    CardHolder<Hex.resource> ResourceCards = new CardHolder<>(this, CardHolder.VisibilityLayer.DevelopmentCard.bit | CardHolder.VisibilityLayer.Trading.bit | CardHolder.VisibilityLayer.Building.bit);
+    CardHolder<CardHolder<Hex.resource>> TradingCards = new CardHolder<>(this, CardHolder.VisibilityLayer.Trading.bit);
+    TradeHolder<Hex.resource> OpenTrade = new TradeHolder<>(this, CardHolder.VisibilityLayer.Trading.bit);
+    int ActiveVisibilityLayer = 0;
+
     String markFile = "catan.fbx";
     String roadFile = "Buildings/Road.fbx";
     String settlementFile = "Buildings/Settlement.fbx";
@@ -56,29 +59,34 @@ public class Player implements Renderable2d {
     }
     public void Playercreate(String name){
         this.name=name;
-        UIElements.add(DevelopmentCards);
-        DevelopmentCards.position = new Vector3f(-0.4f,-0.4f,2f);
-        DevelopmentCards.len = 0.4f;
-
-        UIElements.add(ResourceCards);
-        ResourceCards.position = new Vector3f(0.8f,-0.8f,2f);
-
-        UIElements.add(TradingCards);
-        TradingCards.position = new Vector3f(0.8f,0.8f,2f);
-        TradingCards.rotation = (float) Math.toRadians(180f);
-
-        UIElements.add(OpenTrade);
-        OpenTrade.position = new Vector3f(0,0,2);
+        VisibilityCards.cardPositioner = CardHolder::setLinearTransforms;
+        for (CardHolder.VisibilityLayer layer : CardHolder.VisibilityLayer.values())
+            VisibilityCards.add(layer,markFile);
+        //System.out.println(VisibilityCards.Cards.size());
+        VisibilityCards.position = new Vector3f(VisibilityCards.len*VisibilityCards.Cards.size()/2f-VisibilityCards.len/2.0f,-1.2f,2f);
+        UIElements.add(VisibilityCards);
 
 
-        for (int i = 0; i < 4; i++){
-            UIElements.get(i).HighLight = new Mesh(markFile);
-            UIElements.get(i).HighLight.rotation.rotateX(90);
+        for (Catan.BuildingOption building : Catan.BuildingOption.values()) {
+            BuildingCards.add(building, markFile);
+            //System.out.println(building);
         }
-        UIElements.get(0).HighLight.position = DevelopmentCards.position;
-        UIElements.get(1).HighLight.position = ResourceCards.position;
-        UIElements.get(2).HighLight.position = TradingCards.position;
-        UIElements.get(3).HighLight.position = OpenTrade.position;
+        BuildingCards.position = new Vector3f(-0.8f,-1f,2f);
+        UIElements.add(BuildingCards);
+
+        DevelopmentCards.position = new Vector3f(-0.8f,-1f,2f);
+        UIElements.add(DevelopmentCards);
+
+        ResourceCards.position = new Vector3f(0.8f,-1f,2f);
+        UIElements.add(ResourceCards);
+
+        TradingCards.position = new Vector3f(-0.8f,-1f,2f);
+        UIElements.add(TradingCards);
+
+        OpenTrade.position = new Vector3f(0,0,2);
+        UIElements.add(OpenTrade);
+
+
 
     }
     public boolean hasWon(){

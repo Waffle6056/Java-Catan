@@ -35,6 +35,9 @@ public class Material {
         //processMaterial(material,"dir/");
         diffuseBuffer = createTexture(out.dataString());
     }
+    public Material(CharacterTexture characterTexture){
+        diffuseBuffer = characterTexture.TextureAddress;
+    }
     int createTexture(String path){
         int[] width = new int[1], height = new int[1], nrChannels = new int[1];
         if (path.contains(":\\Java-Catan\\")) {

@@ -3,6 +3,8 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-assimp-natives-windows.jar!/" />
       <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-assimp.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-freetype-natives-windows.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-freetype.jar!/" />
       <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-glfw-natives-windows.jar!/" />
       <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-glfw.jar!/" />
       <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-natives-windows.jar!/" />
@@ -17,6 +19,7 @@
     <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-assimp-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-freetype-sources.jar!/" />
       <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-glfw-sources.jar!/" />
       <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-openal-sources.jar!/" />
       <root url="jar://$PROJECT_DIR$/lwjgl-release-3.3.6-custom/lwjgl-opengl-sources.jar!/" />

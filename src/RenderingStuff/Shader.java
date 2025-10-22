@@ -5,6 +5,10 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.FloatBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Scanner;
 
 import static org.lwjgl.opengl.GL11C.GL_FALSE;
 import static org.lwjgl.opengl.GL20C.*;
@@ -13,26 +17,16 @@ import static org.lwjgl.opengl.GL20C.glDeleteShader;
 public class Shader {
     public final int shaderProgram;
 
-    public Shader(){
+    public Shader(String vertexFile, String fragmentFile){
         int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        String vertexCode = "#version 330 core\n"+
-                "layout (location = 0) in vec3 aPos;\n"+
-                "layout (location = 1) in vec3 aNorm;\n"+
-                "layout (location = 2) in vec2 aTex;\n"+
-                "uniform mat3 normalMat;\n"+
-                "uniform mat4 model;\n"+
-                "uniform mat4 view;\n"+
-                "uniform mat4 projection;\n"+
-                "out vec2 texCoord;\n"+
-                "out vec3 fragPos;\n"+
-                "out vec3 normal;\n"+
-                "void main()\n"+
-                "{\n"+
-                "   fragPos = (model * vec4(aPos.xyz, 1.0)).xyz;\n"+
-                "   gl_Position = projection * view * vec4(fragPos, 1.0);\n"+
-                "   texCoord = aTex;\n"+
-                "   normal = normalMat * aNorm;\n"+
-                "}\0";
+
+        String vertexCode = "";
+        try {
+            vertexCode = new String(Files.readAllBytes(Paths.get(vertexFile)), StandardCharsets.UTF_8);
+            System.out.println(vertexCode);
+        }catch (Exception e){
+            System.out.println("vertex code import failed");
+        }
         glShaderSource(vertexShader,vertexCode);
         glCompileShader(vertexShader);
 
@@ -46,53 +40,17 @@ public class Shader {
 
 
         int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        String fragmentCode ="" +
-                "#version 330 core\n" +
-                "struct Light{\n" +
-                "   vec3 pos;\n" +
-                "   vec3 ambient;\n" +
-                "   vec3 diffuse;\n" +
-                "   vec3 specular;\n" +
-                "};\n" +
 
-//                "struct Material{\n" +
-//                "   sampler2D diffuse;\n" +
-//                "   sampler2D specular;\n" +
-//                "   float shininess;\n" +
-//                "};\n" +
 
-                "out vec4 FragColor;\n" +
 
-                "in vec2 texCoord;\n"+
-                "in vec3 fragPos;\n"+
-                "in vec3 normal;\n"+
+        String fragmentCode = "";
 
-                "uniform Light light;\n"+
-
-                "uniform sampler2D diffuseMapTest;\n"+
-
-                //"uniform Material material;\n"+
-                "uniform vec3 viewPos;\n"+
-
-                "void main()\n" +
-                "{\n" +
-                "   vec3 viewDir = normalize(viewPos - fragPos);\n"+
-                "   vec3 lightDir = normalize(light.pos - fragPos);\n"+
-                "   vec3 reflectDir = reflect(-lightDir, normal);\n"+
-
-                "   vec3 lightColor = texture(diffuseMapTest, texCoord).xyz;\n"+
-
-                "   vec3 ambient = light.ambient * lightColor.rgb;\n"+
-
-                "   float diffuseVal = max(dot(normalize(normal), lightDir), 0.0);\n"+
-                "   vec3 diffuse = light.diffuse * lightColor.rgb * diffuseVal;\n"+
-
-                "   float specularVal = pow(max(dot(viewDir, reflectDir), 0.0), 32);\n"+
-                "   vec3 specular = light.specular * lightColor.rgb * specularVal;\n"+
-
-                "   FragColor = vec4(ambient + diffuse + specular,1);\n" +
-                //"   FragColor = vec4(lightColor,1);\n" +
-                "} ";
+        try {
+            fragmentCode = new String(Files.readAllBytes(Paths.get(fragmentFile)), StandardCharsets.UTF_8);
+            System.out.println(fragmentCode);
+        }catch (Exception e){
+            System.out.println("vertex code import failed");
+        }
         glShaderSource(fragmentShader,fragmentCode);
         glCompileShader(fragmentShader);
 

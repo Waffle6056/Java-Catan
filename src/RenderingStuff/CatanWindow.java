@@ -6,7 +6,6 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.*;
 
-import java.lang.Math;
 import java.nio.*;
 import java.util.ArrayList;
 
@@ -23,12 +22,14 @@ public class CatanWindow {
 
     // The window handle
     public long window;
-    public Shader shader;
+    public Shader defaultShader;
+    public Shader textShader;
     int width = 1600, height = 1000;
     public Camera camera;
     public Camera camera2d;
     public List<Mesh> meshes = new ArrayList<>();
     public List<Mesh> meshes2d = new ArrayList<>();
+    public List<Mesh> textMeshes2d = new ArrayList<>();
     public void run() {
         System.out.println("Hello LWJGL " + Version.getVersion() + "!");
 
@@ -40,7 +41,13 @@ public class CatanWindow {
         // creates the GLCapabilities instance and makes the OpenGL
         // bindings available for use.
         GL.createCapabilities();
-        shader = new Shader();
+
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        defaultShader = new Shader("src/RenderingStuff/vertex.vs","src/RenderingStuff/fragment.vs");
+        textShader = new Shader("src/RenderingStuff/vertex.vs","src/RenderingStuff/textFragment.vs");
         glViewport(0,0,width,height);
 
         initializeCamera();
@@ -48,6 +55,7 @@ public class CatanWindow {
 
         // Set the clear color
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        Text.initialize();
     }
 
     public void terminate(){
@@ -64,15 +72,18 @@ public class CatanWindow {
         // Poll for window events. The key callback above will only be
         // invoked during this call.
         glfwPollEvents();
-        camera.update(window, shader, delta);
+        camera.update(window, defaultShader, delta);
         for (Mesh mesh : meshes)
-            mesh.draw(shader);
+            mesh.draw(defaultShader);
 
         //System.out.println(camera2d.camPos);
-        camera2d.update(window, shader, delta);
+        camera2d.update(window, defaultShader, delta);
         for (Mesh mesh : meshes2d)
-            mesh.draw(shader);
+            mesh.draw(defaultShader);
 
+        camera2d.update(window, textShader, delta);
+        for (Mesh mesh : textMeshes2d)
+            mesh.draw(textShader);
 
 
 
@@ -100,7 +111,6 @@ public class CatanWindow {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
-
         // Create the window
         window = glfwCreateWindow(width, height, "Catan", NULL, NULL);
         if ( window == NULL )
@@ -138,6 +148,7 @@ public class CatanWindow {
 
         // Make the window visible
         glfwShowWindow(window);
+
     }
 
     void initializeCamera(){
