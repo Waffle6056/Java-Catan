@@ -78,7 +78,6 @@ public class Board implements Renderable{
         Hex.HexBuilding ver = slot.ver;
 
 
-        //System.out.println(hex.x + " " + hex.y+" "+ver+" "+hex.buildings[ver.index]);
         if (hex.constructBuilding(ver, option, turnPlayer)) {
             turnPlayer.pay(option);
             if (option == Catan.BuildingOption.City) {
@@ -87,14 +86,13 @@ public class Board implements Renderable{
             }
             else
                 turnPlayer.settlements--;
+
             turnPlayer.vp++;
-            instance.MeshQueue.add(hex.buildings[ver.index]);
-            //System.out.println("COMPLETED BUILDING "+hex.buildings[ver.index].type);
             out[0] = hex.buildings[ver.index];
+            out[0].updateOnRender();
             if (out[0].ConnectingPort != null)
                 turnPlayer.TradingCards.add(out[0].ConnectingPort);
             return true;
-            //System.out.println("built town/city "+hex.mesh.position+" "+ver);
         }
         return false;
     }
@@ -109,15 +107,11 @@ public class Board implements Renderable{
         Hex hex2 = slot2.hex;
         Hex.HexBuilding ver2 = slot2.ver;
 
-        //System.out.println(hex1.x+" "+hex1.y+" "+ver1);
-        //System.out.println(hex2.x+" "+hex2.y+" "+ver2);
 
         Road[] t = new Road[1];
         if (hex1.constructRoads(ver1, hex2, ver2, Catan.BuildingOption.Road, turnPlayer, t)){
-            instance.MeshQueueRoad.add(t[0]);
+            t[0].updateOnRender();
             turnPlayer.pay(option);
-//                hex1.constructbuilding(ver1, BuildingOption.Road, turnPlayer);
-//                hex2.constructbuilding(ver2, BuildingOption.Road, turnPlayer);
             return true;
         }
         else
@@ -265,8 +259,8 @@ public class Board implements Renderable{
         Building p1 = hex.buildings[ind1];
         Building p2 = hex.buildings[ind2];
 
-        PortHolder<Hex.resource> port = PortHolder.generatePort();
-        Card<CardHolder<Hex.resource>> card = PortHolder.generatePortCard(port);
+        PortHolder<Hex.resource,Card<Hex.resource>> port = PortHolder.generatePort();
+        Card<CardHolder<Hex.resource, Card<Hex.resource>>> card = PortHolder.generatePortCard(port);
         p1.ConnectingPort = card;
         p2.ConnectingPort = card;
 
@@ -274,7 +268,7 @@ public class Board implements Renderable{
         addPortMesh(port, hex, position);
         addRequirementSignatures(port, position);
     }
-    Mesh generateRequirementSignature(PortHolder<Hex.resource> port, Card<Hex.resource> c, int cardPosition){
+    Mesh generateRequirementSignature(PortHolder<Hex.resource,Card<Hex.resource>> port, Card<Hex.resource> c, int cardPosition){
         Mesh req = new Mesh(c.file);
 
         req.scale.mul(3);
@@ -290,7 +284,7 @@ public class Board implements Renderable{
 
         return req;
     }
-    void addRequirementSignatures(PortHolder<Hex.resource> port, Vector3f position){
+    void addRequirementSignatures(PortHolder<Hex.resource,Card<Hex.resource>> port, Vector3f position){
         int midInd = port.TradeRequirements.size() / 2;
         int j = 0;
         for (Card<Hex.resource> reqResource : port.TradeRequirements) {
@@ -302,7 +296,7 @@ public class Board implements Renderable{
         }
         //System.out.println(new Vector3f(1,0,0).angleSigned(v,new Vector3f(0,0,1))+" "+v+" ("+temp.x+", "+temp.y+")"+m.position+" "+cardFile);
     }
-    void addPortMesh(PortHolder<Hex.resource> port, Hex hex, Vector3f position){
+    void addPortMesh(PortHolder<Hex.resource,Card<Hex.resource>> port, Hex hex, Vector3f position){
         Mesh m = new Mesh("Buildings/Port.fbx");
         m.position.add(position);
         Vector3f v = new Vector3f(-hex.x + position.x, hex.y - position.z, 0).normalize();

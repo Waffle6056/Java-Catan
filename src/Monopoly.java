@@ -5,10 +5,10 @@ public class Monopoly extends DevelopmentCard{
     @Override
     public void use(Catan instance)  {
         Player turnPlayer = instance.turnPlayer;
-        PortHolder<Hex.resource> port = new PortHolder<>(null);
+        PortHolder<Hex.resource,Card<Hex.resource>> port = new PortHolder<>(null);
         for (Card<Hex.resource> c : PortHolder.defaultInventory(1))
             port.addPermanent(c);
-        instance.openTradingInventory(port);
+        instance.turnPlayer.openTradingInventory(port);
         StartUseThread(instance);
     }
     private void StartUseThread(Catan instance){

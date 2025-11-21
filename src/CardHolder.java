@@ -3,26 +3,29 @@ import org.joml.*;
 
 import java.lang.Math;
 import java.util.*;
-public class CardHolder<E> implements Renderable2d {
-    List<Card<E>> Cards = new ArrayList<>();
+public class CardHolder<E, C extends Card<E>> implements Renderable2d {
+    List<C> Cards = new ArrayList<>();
     int ind = 0;
-    List<Card<E>> CardsSelected = new ArrayList<>();
+    List<C> CardsSelected = new ArrayList<>();
     Player owner;
     public Vector3f position = new Vector3f(0, 0, 0);
     public Vector3f scale = new Vector3f(2, 2, 2);
 
     public float rotation = 0;
     public float len = .2f;
+    public float dis = .2f;
     HashMap<E, Integer> Counts = new HashMap<>();
     public CardPositioner cardPositioner = CardHolder::setCircularTransforms;
     int VisibilityLayers = 0;
     enum VisibilityLayer{
-        Building(1),
-        Trading(2),
-        DevelopmentCard(4);
+        Building(1, "CatanCardMeshes/UICategories/BuildingTab.fbx"),
+        Trading(2, "CatanCardMeshes/UICategories/TradingTab.fbx"),
+        DevelopmentCard(4, "CatanCardMeshes/UICategories/DevelopmentTab.fbx");
         int bit;
-        VisibilityLayer(int bit){
+        public final String TabMeshFile;
+        VisibilityLayer(int bit, String TabMeshFile){
             this.bit = bit;
+            this.TabMeshFile = TabMeshFile;
         }
     }
     public CardHolder(Player owner, int visibilityLayers) {
@@ -33,32 +36,34 @@ public class CardHolder<E> implements Renderable2d {
     public CardHolder(Player owner) {
         this.owner = owner;
     }
+    public CardHolder(){}
+    public List<C> Cards(){
+        return Cards;
+    }
+    public List<E> CardData(){
+        ArrayList<E> list = new ArrayList<>();
+        for (C c : Cards())
+            list.add(c.data);
+        return list;
+    }
 
-    public Card<E> add(Card<E> card) {
+    public C add(C card) {
         Cards.add(card);
         Counts.put(card.data, Counts.getOrDefault(card.data, 0) + 1);
         return card;
     }
 
-    public Card<E> add(E data) {
-        return add(new Card<>(data));
-    }
-
-    public Card<E> add(E data, String meshFile) {
-        return add(new Card<>(data, meshFile));
-    }
-
-    public Card<E> get(int i) {
+    public C get(int i) {
         return Cards.get(i);
     }
 
-    public void addAll(CardHolder<E> other) {
-        for (Card<E> c : other.Cards)
+    public void addAll(CardHolder<E,C> other) {
+        for (C c : other.Cards)
             add(c);
     }
 
-    public void addAll(List<Card<E>> other) {
-        for (Card<E> c : other)
+    public void addAll(List<C> other) {
+        for (C c : other)
             add(c);
     }
 
@@ -73,11 +78,11 @@ public class CardHolder<E> implements Renderable2d {
         return -1;
     }
 
-    public void remove(E data) {
+    public void removeFirst(E data) {
         remove(Cards.get(indexOf(data)));
     }
 
-    public void remove(Card<E> card) {
+    public void remove(C card) {
         if (!Cards.contains(card))
             return;
         Cards.remove(card);
@@ -87,12 +92,12 @@ public class CardHolder<E> implements Renderable2d {
         setInd(ind);
     }
 
-    public void removeAll(List<Card<E>> cards) {
+    public void removeAll(List<C> cards) {
         for (int i = cards.size() - 1; i >= 0; i--)
             remove(cards.get(i));
     }
 
-    public void trade(CardHolder<E> other) {
+    public void trade(CardHolder<E,C> other) {
         addAll(other.CardsSelected);
         other.addAll(CardsSelected);
 
@@ -101,8 +106,8 @@ public class CardHolder<E> implements Renderable2d {
     }
 
     public void clear() {
-        Cards.clear();
-        CardsSelected.clear();
+        while (!Cards.isEmpty())
+            remove(get(Cards.size()-1));
     }
 
     public void setInd(int i) {
@@ -117,7 +122,7 @@ public class CardHolder<E> implements Renderable2d {
         setInd(ind + delta);
     }
 
-    public Card<E> current() {
+    public C current() {
         if (Cards.size() == 0 || ind < 0 || ind >= Cards.size())
             return null;
         return Cards.get(ind);
@@ -131,7 +136,7 @@ public class CardHolder<E> implements Renderable2d {
     public void select() {
         if (Cards.size() == 0)
             return;
-        Card<E> Current = Cards.get(ind);
+        C Current = Cards.get(ind);
         Current.selected = !Current.selected;
         if (Current.selected) {
             CardsSelected.add(Current);
@@ -139,24 +144,24 @@ public class CardHolder<E> implements Renderable2d {
             CardsSelected.remove(Current);
         }
     }
-
     @FunctionalInterface
     interface CardPositioner {
-        public void SetTransforms(List<Card> Cards, Vector3f position, float rotation, Vector3f scale, int ind, float len);
+        public void SetTransforms(List<Card> Cards, Vector3f position, float rotation, Vector3f scale, int ind, float len, float dis);
     }
 
-    public static void setCircularTransforms(List<Card> Cards, Vector3f position, float rotation, Vector3f scale, int ind, float len) {
+    public static void setCircularTransforms(List<Card> Cards, Vector3f position, float rotation, Vector3f scale, int ind, float len, float dis) {
         //System.out.println(current().data+" "+ind);
         ind = Math.max(0, Math.min(Cards.size() - 1, ind));
+        float zDistance = 1f; // arbitrary separation between card meshes
         for (int i = 0; i < Cards.size(); i++) {
             if (Cards.get(i).mesh != null) {
-                Vector3f c = new Vector3f(position).add(0, 0, i * .2f);
+                Vector3f c = new Vector3f(position).add(0, 0, i * zDistance);
 
                 int midDiff = i - ind;
                 float angle = (float) Math.toRadians(Math.min(180f / Cards.size(), 180f / 7f)) * midDiff;
                 float distance = len;
                 if (midDiff == 0)
-                    distance *= 2;
+                    distance += dis;
                 Vector3f rotated = new Vector3f(0, distance, 0).rotateZ(angle + rotation);
                 c.add(rotated);
 
@@ -176,18 +181,19 @@ public class CardHolder<E> implements Renderable2d {
             }
         }
     }
-    public static void setLinearTransforms(List<Card> Cards, Vector3f position, float rotation, Vector3f scale, int ind, float len) {
+
+    public static void setLinearTransforms(List<Card> Cards, Vector3f position, float rotation, Vector3f scale, int ind, float len, float dis) {
         //System.out.println(current().data+" "+ind);
         ind = Math.max(0, Math.min(Cards.size() - 1, ind));
-        float zDistance = .2f; // arbitrary separation between card meshes
+        float zDistance = 1f; // arbitrary separation between card meshes
         for (int i = 0; i < Cards.size(); i++) {
             if (Cards.get(i).mesh != null) {
                 Vector3f c = new Vector3f(position).add(0, 0, i * zDistance);
 
                 int midDiff = i - ind;
-                float distance = len;
+                float distance = 0;
                 if (midDiff == 0)
-                    distance *= 2;
+                    distance += dis;
                 Vector3f rotated = new Vector3f(i*-len, distance, 0).rotateZ(rotation);
                 c.add(rotated);
 
@@ -211,7 +217,7 @@ public class CardHolder<E> implements Renderable2d {
     public void setTransforms(){
         List<Card> test = new ArrayList<>();
         test.addAll(Cards);
-        cardPositioner.SetTransforms(test, position, rotation, scale, ind, len);
+        cardPositioner.SetTransforms(test, position, rotation, scale, ind, len, dis);
     }
     public void deselectAll(){
         for (int i = 0; i < Cards.size(); i++) {
@@ -233,8 +239,9 @@ public class CardHolder<E> implements Renderable2d {
     public List<Mesh> toMesh2d() {
         ArrayList<Mesh> out = new ArrayList<>();
         setTransforms();
-        for (Card<E> c : Cards)
-            out.addAll(c.toMesh());
+        for (C c : Cards)
+            out.addAll(c.toMesh2d());
+
         return out;
     }
 }

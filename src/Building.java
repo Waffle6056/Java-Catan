@@ -5,10 +5,10 @@ import java.util.List;
 import RenderingStuff.Mesh;
 import org.joml.Math;
 
-public class Building extends Canvas implements Renderable {
+public class Building extends Canvas implements Renderable, MeshUpdates {
     float x, y;
     Catan.BuildingOption type = Catan.BuildingOption.Road;
-    Card<CardHolder<Hex.resource>> ConnectingPort = null;
+    Card<CardHolder<Hex.resource, Card<Hex.resource>>> ConnectingPort = null;
     int resourcegain;
     Player owner;
     Mesh mesh;
@@ -58,9 +58,36 @@ public class Building extends Canvas implements Renderable {
     @Override
     public List<Mesh> toMesh() {
         java.util.List<Mesh> meshList = new ArrayList<>();
+        if (updateOnRender) {
+            updateOnRender = false;
+            updateMesh();
+        }
         if (mesh != null)
             meshList.add(mesh);
         return meshList;
     }
 
+    boolean updateOnRender = false;
+    @Override
+    public void updateOnRender() {
+        updateOnRender = true;
+    }
+
+    @Override
+    public void updateMesh() {
+        if (owner != null){
+            String file = "";
+            //System.out.println(b.type);
+            switch (type){
+                case City -> file = owner.cityFile;
+                case Town -> file = owner.settlementFile;
+            }
+            if (type == Catan.BuildingOption.Road)
+                return;
+            Mesh m = new Mesh(file);
+            m.position.add(x,0,y);
+            m.rotation.rotateX(Math.toRadians(-90));
+            mesh = m;
+        }
+    }
 }

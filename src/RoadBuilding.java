@@ -21,8 +21,8 @@ public class RoadBuilding extends DevelopmentCard{
 
         Player turnPlayer = instance.turnPlayer;
         for (int i = 0; i < 2; i++) {
-            turnPlayer.ResourceCards.add(Hex.resource.Brick);
-            turnPlayer.ResourceCards.add(Hex.resource.Wood);
+            turnPlayer.ResourceCards.add(new Card<>(Hex.resource.Brick));
+            turnPlayer.ResourceCards.add(new Card<>(Hex.resource.Wood));
         }
         System.out.println("BUILD A ROAD");
 

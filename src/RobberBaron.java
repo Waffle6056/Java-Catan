@@ -67,7 +67,6 @@ public class RobberBaron implements Renderable, Renderable2d{
 
             System.out.println("ROBBED "+victim.name);
 
-            instance.turnPlayer.ResourceCards.deselectAll();
             victim.ResourceCards.deselectAll();
             if (victim.ResourceCards.Cards.isEmpty())
                 return;
@@ -78,8 +77,10 @@ public class RobberBaron implements Renderable, Renderable2d{
 
             System.out.println(victim.ResourceCards.current().data);
 
-            instance.trade(victim.ResourceCards);
+            instance.turnPlayer.ResourceCards.deselectAll();
+            instance.turnPlayer.ResourceCards.trade(victim.ResourceCards);
         }
+        instance.turnPlayer.OpenTrade.update();
     }
     void rob(){
         while (!victims.isEmpty()) {
@@ -90,8 +91,7 @@ public class RobberBaron implements Renderable, Renderable2d{
         System.out.println("ROBBED "+victim.name);
         if (instance.turnPlayer == victim)
             return;
-        if (instance.turnPlayer.OpenTrade.owner == victim)
-            instance.turnPlayer.OpenTrade.clear();
+
 
         if (victim.ResourceCards.Cards.isEmpty())
             return;
@@ -99,7 +99,9 @@ public class RobberBaron implements Renderable, Renderable2d{
         victim.ResourceCards.select();
         System.out.println(victim.ResourceCards.current().data);
 
-        instance.trade(victim.ResourceCards);
+        instance.turnPlayer.ResourceCards.deselectAll();
+        instance.turnPlayer.ResourceCards.trade(victim.ResourceCards);
+        instance.turnPlayer.OpenTrade.update();
     }
 
     @Override

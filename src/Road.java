@@ -5,14 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class Road implements Renderable {
-    @Override
-    public List<Mesh> toMesh() {
-        java.util.List<Mesh> meshList = new ArrayList<>();
-        if (mesh != null)
-            meshList.add(mesh);
-        return meshList;
-    }
+public class Road implements Renderable, MeshUpdates {
+
     Player owner;
     Road[] connects=new Road[4];
     Building left, right;
@@ -111,5 +105,32 @@ public class Road implements Renderable {
         }
         visited.add(cu.creation);
         return 1+Math.max(Math.max(Math.max(RoadPath(owner, cu.connects[0], visited),RoadPath(owner, cu.connects[1], visited)),RoadPath(owner, cu.connects[2], visited)),RoadPath(owner, cu.connects[3], visited));
+    }
+    @Override
+    public List<Mesh> toMesh() {
+        java.util.List<Mesh> meshList = new ArrayList<>();
+        if (updateOnRender){
+            updateOnRender = false;
+            updateMesh();
+        }
+        if (mesh != null)
+            meshList.add(mesh);
+        return meshList;
+    }
+    boolean updateOnRender = false;
+    @Override
+    public void updateOnRender() {
+        updateOnRender = true;
+    }
+
+    @Override
+    public void updateMesh() {
+        String file = owner.roadFile;
+        Mesh m = new Mesh(file);
+        m.position.add(x,0,y);
+        m.rotation.rotateX(Math.toRadians(-90));
+        m.rotation.rotateZ(Math.toRadians(angle+90));
+        mesh = m;
+
     }
 }

@@ -4,13 +4,14 @@ import java.util.List;
 
 
 
-public class BankHolder<E> extends PortHolder<E>{
+public class BankHolder<E, C extends Card<E>> extends PortHolder<E, C>{
 
     public BankHolder(Player owner) {
         super(owner);
     }
 
-    public boolean matches(List<Card<E>> Offer){
+    @Override
+    public boolean matches(List<C> Offer){
 
         System.out.println("CALLED BANK MATCHES");
         if (TradeRequirements.size() == 0)
