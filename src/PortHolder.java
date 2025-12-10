@@ -1,63 +1,46 @@
+import CardStructure.BankHolder;
+import CardStructure.Card;
+import CardStructure.CardHolder;
+import CardStructure.TradingRequirementFunction;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class PortHolder<E, C extends Card<E>> extends CardHolder<E, C>{
-    List<C> TradeRequirements = new ArrayList<>();
-    public PortHolder(Player owner) {
-        super(owner);
-    }
-
-    public C addPermanent(C card){
-        return super.add(card);
-    }
-
-    @Override
-    public void remove(C card) {
-        ;
-    }
-    @Override
-    public C add(C card){
-        return null;
-    }
-    @Override
-    public void clear(){
-        ;
-    }
-
+public class PortHolder{
     static ArrayList<Card<Hex.resource>> defaultInventory(int cnt){
         ArrayList<Card<Hex.resource>> out = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < cnt; j++) {
-                out.add(Card.createResourceCard(Hex.resource.values()[i]));
+                out.add(Hex.resource.createResourceCard(Hex.resource.values()[i]));
             }
         }
         return out;
     }
-    public static Card<CardHolder<Hex.resource, Card<Hex.resource>>> generatePortCard(PortHolder<Hex.resource, Card<Hex.resource>> port) {
+    public static Card<CardHolder<Hex.resource, Card<Hex.resource>>> generatePortCard(BankHolder<Hex.resource> port) {
         String cardFile = port.TradeRequirements.get(0).data.ResourceMesh;
         Card<CardHolder<Hex.resource, Card<Hex.resource>>> card = new Card<>(port, cardFile);
         return card;
     }
 
-    static ArrayList<PortHolder<Hex.resource, Card<Hex.resource>>> Ports = new ArrayList<>();
-    public static PortHolder<Hex.resource, Card<Hex.resource>> generatePort(){
+    static ArrayList<BankHolder<Hex.resource>> Ports = new ArrayList<>();
+    public static BankHolder<Hex.resource> generatePort(){
         if (Ports.size() > 0)
             return Ports.remove(0);
 
 
         for (int i = 0; i < 5; i++) {
-            PortHolder<Hex.resource, Card<Hex.resource>> port = new PortHolder<>(null);
+            BankHolder<Hex.resource> port = new BankHolder<>(TradingRequirementFunction::SameTypeMatchingAmount);
             for (Card<Hex.resource> c : PortHolder.defaultInventory(5))
                 port.addPermanent(c);
             for (int j = 0; j < 2; j++) {
-                port.TradeRequirements.add(Card.createResourceCard(Hex.resource.values()[i]));
+                port.TradeRequirements.add(Hex.resource.createResourceCard(Hex.resource.values()[i]));
             }
             Ports.add((int)(Math.random()*Ports.size()), port);
         }
 
         for (int i = 0; i < 4; i++) {
-            BankHolder<Hex.resource, Card<Hex.resource>> port = new BankHolder<>(null);
+            BankHolder<Hex.resource> port = new BankHolder<>(TradingRequirementFunction::SameTypeMatchingAmount);
             for (Card<Hex.resource> c : PortHolder.defaultInventory(5))
                 port.addPermanent(c);
             for (int j = 0; j < 3; j++) {
@@ -67,47 +50,5 @@ public class PortHolder<E, C extends Card<E>> extends CardHolder<E, C>{
         }
 
         return Ports.remove(0);
-    }
-    public boolean matches(List<C> Offer){
-        System.out.println("CALLED PORT MATCHES");
-        if (TradeRequirements.size() == 0)
-            return true;
-        HashMap<E, Integer> req = new HashMap<>();
-        for (C c : TradeRequirements)
-            req.put(c.data, req.getOrDefault(c.data,0) + 1);
-
-        HashMap<E, Integer> off = new HashMap<>();
-        for (C c : Offer) {
-            off.put(c.data, off.getOrDefault(c.data,0) + 1);
-        }
-
-
-        for (E d : req.keySet())
-            if (!off.containsKey(d))
-                return false;
-
-        int max = -1;
-        for (E d : req.keySet()) {
-            if (off.get(d) % req.get(d) != 0)
-                return false;
-
-            if (max == -1)
-                max = off.get(d) / req.get(d);
-            else if (off.get(d) / req.get(d) != max)
-                return false;
-
-        }
-        System.out.println(max+" "+CardsSelected.size());
-        return max == CardsSelected.size();
-    }
-    @Override
-    public void trade(CardHolder<E, C> other){
-        System.out.println("MODIFIED TRADE");
-        if (!matches(other.CardsSelected))
-            return;
-        if (other instanceof BankHolder<E, C> && !((BankHolder<E,C>) other).matches(CardsSelected))
-            return;
-
-        super.trade(other);
     }
 }

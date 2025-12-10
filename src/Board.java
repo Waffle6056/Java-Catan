@@ -1,11 +1,16 @@
 import java.awt.*;
 import java.io.*;
 import java.util.*;
-import RenderingStuff.Mesh;
+
+import CardStructure.BankHolder;
+import CardStructure.Card;
+import CardStructure.CardHolder;
+import CardStructure.RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.Renderable;
 import org.joml.Vector3f;
 
 
-public class Board implements Renderable{
+public class Board implements Renderable {
     HashMap<String , Hex> grid;
     HashMap<Integer, ArrayList<Hex>> numbers;
     java.util.List<Mesh> ports = new ArrayList<>();
@@ -259,7 +264,7 @@ public class Board implements Renderable{
         Building p1 = hex.buildings[ind1];
         Building p2 = hex.buildings[ind2];
 
-        PortHolder<Hex.resource,Card<Hex.resource>> port = PortHolder.generatePort();
+        BankHolder<Hex.resource> port = PortHolder.generatePort();
         Card<CardHolder<Hex.resource, Card<Hex.resource>>> card = PortHolder.generatePortCard(port);
         p1.ConnectingPort = card;
         p2.ConnectingPort = card;
@@ -268,7 +273,7 @@ public class Board implements Renderable{
         addPortMesh(port, hex, position);
         addRequirementSignatures(port, position);
     }
-    Mesh generateRequirementSignature(PortHolder<Hex.resource,Card<Hex.resource>> port, Card<Hex.resource> c, int cardPosition){
+    Mesh generateRequirementSignature(BankHolder<Hex.resource> port, Card<Hex.resource> c, int cardPosition){
         Mesh req = new Mesh(c.file);
 
         req.scale.mul(3);
@@ -284,7 +289,7 @@ public class Board implements Renderable{
 
         return req;
     }
-    void addRequirementSignatures(PortHolder<Hex.resource,Card<Hex.resource>> port, Vector3f position){
+    void addRequirementSignatures(BankHolder<Hex.resource> port, Vector3f position){
         int midInd = port.TradeRequirements.size() / 2;
         int j = 0;
         for (Card<Hex.resource> reqResource : port.TradeRequirements) {
@@ -296,7 +301,7 @@ public class Board implements Renderable{
         }
         //System.out.println(new Vector3f(1,0,0).angleSigned(v,new Vector3f(0,0,1))+" "+v+" ("+temp.x+", "+temp.y+")"+m.position+" "+cardFile);
     }
-    void addPortMesh(PortHolder<Hex.resource,Card<Hex.resource>> port, Hex hex, Vector3f position){
+    void addPortMesh(BankHolder<Hex.resource> port, Hex hex, Vector3f position){
         Mesh m = new Mesh("Buildings/Port.fbx");
         m.position.add(position);
         Vector3f v = new Vector3f(-hex.x + position.x, hex.y - position.z, 0).normalize();

@@ -2,7 +2,11 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import RenderingStuff.Mesh;
+import CardStructure.Card;
+import CardStructure.CardHolder;
+import CardStructure.RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.MeshUpdates;
+import CardStructure.RenderingStuff.Renderable;
 import org.joml.Math;
 
 public class Building extends Canvas implements Renderable, MeshUpdates {
@@ -23,7 +27,7 @@ public class Building extends Canvas implements Renderable, MeshUpdates {
     public void gather(Hex.resource type){
         //pre condition type!=desert
         if (owner!=null){
-            owner.ResourceCards.add(Card.createResourceCard(type));
+            owner.ResourceCards.add(Hex.resource.createResourceCard(type));
         }
     }
 

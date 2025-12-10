@@ -1,5 +1,8 @@
-import RenderingStuff.CatanWindow;
-import RenderingStuff.Mesh;
+import CardStructure.*;
+import CardStructure.RenderingStuff.CatanWindow;
+import CardStructure.RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.Renderable;
+import CardStructure.RenderingStuff.Renderable2d;
 import org.joml.*;
 import org.joml.Math;
 
@@ -9,14 +12,14 @@ import java.util.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
-public class Catan implements Renderable, Renderable2d{
+public class Catan implements Renderable, Renderable2d {
     int playersCount = 2;
     public CatanWindow Renderer;
     Board Board;
     CardHolder<Integer, DieCard<Integer>> dice = new CardHolder<>();
     List<Player> players;
     Player turnPlayer;
-    BankHolder<Hex.resource,Card<Hex.resource>> Bank;
+    BankHolder<Hex.resource> Bank;
     int turnInd;
     Mesh cursor, sky, ocean;
     RobberBaron robber;
@@ -66,6 +69,11 @@ public class Catan implements Renderable, Renderable2d{
 
 
     public void run(){
+        Scanner in = new Scanner(System.in);
+        System.out.println("enter player count(2-4) : ");
+        playersCount = in.nextInt();
+
+
         Renderer = new CatanWindow();
         Renderer.run();
 
@@ -80,8 +88,6 @@ public class Catan implements Renderable, Renderable2d{
         bindKeys();
         currentPhase = Phase.SetUp;
 
-        System.out.println("temp player count = "+playersCount);
-
         setupBank();
         setupPlayers();
 
@@ -93,8 +99,8 @@ public class Catan implements Renderable, Renderable2d{
         loop();
     }
     void setupBank(){
-        Bank = new BankHolder<>(null);
-        for (Card<Hex.resource> c : BankHolder.defaultInventory(5))
+        Bank = new BankHolder<>(TradingRequirementFunction::AnyMatchingAmount);
+        for (Card<Hex.resource> c : PortHolder.defaultInventory(5))
             Bank.addPermanent(c);
         for (int j = 0; j < 4; j++)
             Bank.TradeRequirements.add(new Card<>(Hex.resource.Desert, "CatanCardMeshes/Special/Arrow.fbx"));
@@ -104,11 +110,7 @@ public class Catan implements Renderable, Renderable2d{
         players = new ArrayList<>();
         // loads meshes
         for (int i = 0; i < playersCount; i++) {
-            Player.ModelSet set = Player.ModelSet.values()[i];
-            players.add(new Player("PLAYER "+i,set.ColorIndicator));
-            players.get(i).roadFile = set.RoadMesh;
-            players.get(i).cityFile = set.CityMesh;
-            players.get(i).settlementFile = set.SettlementMesh;
+            players.add(new Player("PLAYER "+i, Player.ModelSet.values()[i]));
         }
 
         for (int i = 0; i < playersCount; i++){
@@ -125,7 +127,7 @@ public class Catan implements Renderable, Renderable2d{
             int[] ar = {4,2,0,4,2};
             for (int j = 0; j < 5; j++) {
                 for (int k = 0; k < ar[j]; k++) {
-                    p.ResourceCards.add(Card.createResourceCard(Hex.resource.values()[j]));
+                    p.ResourceCards.add(Hex.resource.createResourceCard(Hex.resource.values()[j]));
                 }
             }
             p.TradingCards.add(new Card<>(Bank, "CatanCardMeshes/Special/Arrow.fbx"));
@@ -158,7 +160,7 @@ public class Catan implements Renderable, Renderable2d{
 //        guideElement.add(null, "CatanCardMeshes/Special/BuildingCost.fbx");
 //        guideElement.add(null, "CatanCardMeshes/Special/Controls.fbx");
 
-        dice.cardPositioner = CardHolder::setLinearTransforms;
+        dice.cardPositioner = CardPositioner::setLinearTransforms;
         dice.len = .3f;
         dice.dis = 0;
         dice.position = new Vector3f(dice.len*dice.Cards.size()/2f-dice.len/2.0f, .75f,5f);
@@ -307,7 +309,7 @@ public class Catan implements Renderable, Renderable2d{
             container.scroll(1);
 
         CardHolder<CardHolder, UICard> elems = turnPlayer.UIElements;
-        elems.get(elems.indexOf(container)).use(this);
+        elems.get(elems.indexOf(container)).use(this, turnPlayer);
     }
 
 
@@ -355,7 +357,7 @@ public class Catan implements Renderable, Renderable2d{
 //        }
 //
         if (key == GLFW_KEY_F)
-            Player.tradeCurrentSelectedCards(turnPlayer.ResourceCards, this);
+            Player.tradeCurrentSelectedCards(turnPlayer.ResourceCards, this, turnPlayer);
 
         if (key == GLFW_KEY_ENTER) {
             nextPlayerTurn();

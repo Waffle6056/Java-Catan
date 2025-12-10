@@ -1,4 +1,4 @@
-import RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.Mesh;
 import org.joml.*;
 
 import javax.swing.text.Position;

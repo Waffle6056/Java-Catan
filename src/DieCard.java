@@ -1,11 +1,12 @@
-import RenderingStuff.Mesh;
+import CardStructure.Card;
+import CardStructure.RenderingStuff.Mesh;
 import org.joml.Math;
 import org.joml.Vector3f;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class DieCard<E> extends Card<E>{
+public class DieCard<E> extends Card<E> {
 
 
 
@@ -17,7 +18,7 @@ public class DieCard<E> extends Card<E>{
         mesh = new Mesh(dieMeshes[0]);
     }
 
-    int roll(){
+    public int roll(){
         roll = (int)(Math.random()*6)+1;
         updateDice = true;
         System.out.println("ROLLED : "+roll);
@@ -31,7 +32,7 @@ public class DieCard<E> extends Card<E>{
             "Numbers/DieFive.fbx",
             "Numbers/DieSix.fbx",
     };
-    void updateDiceVisual(){
+    public void updateDiceVisual(){
         if (!updateDice)
             return;
         updateDice = false;

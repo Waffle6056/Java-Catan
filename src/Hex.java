@@ -2,9 +2,11 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import RenderingStuff.Mesh;
+import CardStructure.Card;
+import CardStructure.RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.Renderable;
 
-public class Hex extends Canvas implements Renderable{
+public class Hex extends Canvas implements Renderable {
     @Override
     public List<Mesh> toMesh() {
         java.util.List<Mesh> meshList = new ArrayList<>();
@@ -19,7 +21,7 @@ public class Hex extends Canvas implements Renderable{
         return meshList;
     }
 
-    enum resource{
+    public enum resource{
         Brick(0, "HexMeshes/Hills.fbx","CatanCardMeshes/Resource/CardBrick.fbx"),
         Grain(1, "HexMeshes/Field.fbx","CatanCardMeshes/Resource/CardGrain.fbx"),
         Rock(2, "HexMeshes/Mountains.fbx","CatanCardMeshes/Resource/CardOre.fbx"),
@@ -33,6 +35,9 @@ public class Hex extends Canvas implements Renderable{
             this.Index = Index;
             this.HexMesh = HexMesh;
             this.ResourceMesh = ResourceMesh;
+        }
+        public static Card<resource> createResourceCard(Hex.resource r){
+            return new Card<>(r, r.ResourceMesh);
         }
     }
     enum HexBuilding{// Up then clockwise

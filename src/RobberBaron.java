@@ -1,10 +1,12 @@
-import RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.Renderable;
+import CardStructure.RenderingStuff.Renderable2d;
 import org.joml.Math;
 import org.joml.Vector3f;
 
 import java.util.*;
 
-public class RobberBaron implements Renderable, Renderable2d{
+public class RobberBaron implements Renderable, Renderable2d {
     public Catan instance;
     public Mesh mesh;
     public Mesh meshNotifier;

@@ -1,4 +1,6 @@
-import RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.MeshUpdates;
+import CardStructure.RenderingStuff.Renderable;
 import org.joml.Math;
 
 import java.util.ArrayList;

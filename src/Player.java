@@ -1,17 +1,31 @@
-import RenderingStuff.Mesh;
+import CardStructure.Card;
+import CardStructure.CardHolder;
+import CardStructure.CardHolderDisplayOnly;
+import CardStructure.CardPositioner;
+import CardStructure.RenderingStuff.Mesh;
+import CardStructure.RenderingStuff.Renderable2d;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import javax.xml.crypto.Data;
 import java.util.*;
 
 public class Player implements Renderable2d {
     public java.util.List<Mesh> toMesh2d() {
         java.util.List<Mesh> meshList = new ArrayList<>();
+        if (playerIndicator != null)
+            meshList.add(playerIndicator);
+
+        if (OpenTrade.Data != null)
+            TradingCards.VisibilityLayers = 0;
+        else
+            TradingCards.VisibilityLayers = CardHolder.VisibilityLayer.Trading.bit;
+
         for (CardHolder c : UIElements.CardData()) {
             if ((c.VisibilityLayers & ActiveVisibilityLayer) > 0)
                 meshList.addAll(c.toMesh2d());
 
         }
+
         return meshList;
     }
 
@@ -35,12 +49,16 @@ public class Player implements Renderable2d {
 
     String name;
     CardHolder<CardHolder, UICard> UIElements = new CardHolder<>();
-    CardHolder<CardHolder.VisibilityLayer, Card<CardHolder.VisibilityLayer>> VisibilityCards = new CardHolder<>(this, CardHolder.VisibilityLayer.DevelopmentCard.bit | CardHolder.VisibilityLayer.Trading.bit | CardHolder.VisibilityLayer.Building.bit);
-    CardHolder<Catan.BuildingOption, Card<Catan.BuildingOption>> BuildingCards = new CardHolder<>(this, CardHolder.VisibilityLayer.Building.bit);
-    CardHolder<DevelopmentCard, Card<DevelopmentCard>> DevelopmentCards = new CardHolder<>(this, CardHolder.VisibilityLayer.DevelopmentCard.bit);
-    CardHolder<Hex.resource, Card<Hex.resource>> ResourceCards = new CardHolder<>(this, CardHolder.VisibilityLayer.DevelopmentCard.bit | CardHolder.VisibilityLayer.Trading.bit | CardHolder.VisibilityLayer.Building.bit);
-    CardHolder<CardHolder<Hex.resource, Card<Hex.resource>>, Card<CardHolder<Hex.resource, Card<Hex.resource>>>> TradingCards = new CardHolder<>(this, CardHolder.VisibilityLayer.Trading.bit);
-    CardHolderDisplayOnly OpenTrade = new CardHolderDisplayOnly(this, CardHolder.VisibilityLayer.Trading.bit);
+    CardHolder<CardHolder.VisibilityLayer, Card<CardHolder.VisibilityLayer>> VisibilityCards = new CardHolder<>( CardHolder.VisibilityLayer.DevelopmentCard.bit | CardHolder.VisibilityLayer.Trading.bit | CardHolder.VisibilityLayer.Building.bit);
+    CardHolder<Catan.BuildingOption, Card<Catan.BuildingOption>> BuildingCards = new CardHolder<>( CardHolder.VisibilityLayer.Building.bit);
+    CardHolder<DevelopmentCard, Card<DevelopmentCard>> DevelopmentCards = new CardHolder<>(CardHolder.VisibilityLayer.DevelopmentCard.bit);
+    CardHolder<Hex.resource, Card<Hex.resource>> ResourceCards = new CardHolder<>( CardHolder.VisibilityLayer.DevelopmentCard.bit | CardHolder.VisibilityLayer.Trading.bit | CardHolder.VisibilityLayer.Building.bit);
+    CardHolder<CardHolder<Hex.resource, Card<Hex.resource>>, Card<CardHolder<Hex.resource, Card<Hex.resource>>>> TradingCards = new CardHolder<>( CardHolder.VisibilityLayer.Trading.bit);
+    CardHolderDisplayOnly OpenTrade = new CardHolderDisplayOnly( CardHolder.VisibilityLayer.Trading.bit);
+    CardHolder<CardHolder,UICard> BuildingButtons = new CardHolder<>(CardHolder.VisibilityLayer.Building.bit);
+    CardHolder<CardHolder,UICard> TradeButtons = new CardHolder<>(CardHolder.VisibilityLayer.Trading.bit);
+    CardHolder<CardHolder,UICard> DevelopmentCardButtons = new CardHolder<>(CardHolder.VisibilityLayer.DevelopmentCard.bit);
+    Mesh playerIndicator;
     int ActiveVisibilityLayer = 0;
 
     String markFile = "catan.fbx";
@@ -61,21 +79,25 @@ public class Player implements Renderable2d {
         Playercreate(name);
     }
 
-    public Player(String name, String markFile) {
-        this.markFile = markFile;
+    public Player(String name, ModelSet set) {
+
+        roadFile = set.RoadMesh;
+        cityFile = set.CityMesh;
+        settlementFile = set.SettlementMesh;
+        markFile = set.ColorIndicator;
         Playercreate(name);
     }
 
     public void Playercreate(String name) {
         this.name = name;
-        VisibilityCards.cardPositioner = CardHolder::setLinearTransforms;
+        VisibilityCards.cardPositioner = CardPositioner::setLinearTransforms;
         for (CardHolder.VisibilityLayer layer : CardHolder.VisibilityLayer.values())
             VisibilityCards.add(new Card<>(layer, layer.TabMeshFile));
         //System.out.println(VisibilityCards.Cards.size());
-        VisibilityCards.len = .235f;
+        VisibilityCards.len = .24f;
         VisibilityCards.dis = VisibilityCards.len * 2;
         VisibilityCards.rotation = (float) (Math.PI / 2);
-        VisibilityCards.position = new Vector3f(1.55f, VisibilityCards.len * VisibilityCards.Cards.size() / 2f - VisibilityCards.len / 2.0f, 5f);
+        VisibilityCards.position = new Vector3f(1.5f, VisibilityCards.len * VisibilityCards.Cards.size() / 2f - VisibilityCards.len / 2.0f, 5f);
         UIElements.add(new UICard(VisibilityCards, Player::setVisibilityLayer));
 
 
@@ -83,42 +105,61 @@ public class Player implements Renderable2d {
             BuildingCards.add(new Card<>(building, building.CardFile));
             //System.out.println(building);
         }
-        BuildingCards.position = new Vector3f(-0.8f, -1f, 2f);
-        UIElements.add(new UICard(BuildingCards, Player::buildBuilding));
+        BuildingCards.position = new Vector3f(-0.5f, -1f, 2f);
+        UIElements.add(new UICard(BuildingCards, Player::doNothing));
 
-        DevelopmentCards.position = new Vector3f(-0.8f, -1f, 2f);
-        UIElements.add(new UICard(DevelopmentCards, Player::useCurrentDevelopmentCard));
+        DevelopmentCards.position = new Vector3f(-0.5f, -1f, 2f);
+        UIElements.add(new UICard(DevelopmentCards, Player::doNothing));
 
-        ResourceCards.position = new Vector3f(0.8f, -1f, 2f);
-        UIElements.add(new UICard(ResourceCards, Player::selectCurrentResourceCard));
+        ResourceCards.position = new Vector3f(0.5f, -1f, 2f);
+        UIElements.add(new UICard(ResourceCards, Player::selectCurrentCard));
 
-        TradingCards.position = new Vector3f(-0.8f, -1f, 2f);
+        TradingCards.position = new Vector3f(-0.5f, -1f, 2f);
         UIElements.add(new UICard(TradingCards, Player::openTradingInventory));
 
-        OpenTrade.position = new Vector3f(0, 0, 2);
+        OpenTrade.position = TradingCards.position;
         UIElements.add(new UICard(OpenTrade, Player::selectCurrentTradeInvCard));
 
+        BuildingButtons.position = new Vector3f(0,-1,5);
+        BuildingButtons.add(new UICard(BuildingCards,"Buttons/TradeButton.fbx",Player::buildBuilding));
+        UIElements.add(new UICard(BuildingButtons, Player::recursiveUse));
+
+        TradeButtons.position = new Vector3f(0,-1,5);
+        TradeButtons.add(new UICard(ResourceCards,"Buttons/TradeButton.fbx",Player::tradeCurrentSelectedCards));
+        UIElements.add(new UICard(TradeButtons, Player::recursiveUse));
+
+        DevelopmentCardButtons.position = new Vector3f(0,-1,5);
+        DevelopmentCardButtons.add(new UICard(DevelopmentCards,"Buttons/TradeButton.fbx",Player::useCurrentDevelopmentCard));
+        UIElements.add(new UICard(DevelopmentCardButtons, Player::recursiveUse));
+
+        playerIndicator = new Mesh(markFile);
+        playerIndicator.position = new Vector3f(1.2f,0.8f,5);
+        playerIndicator.rotation = new Quaternionf();
+        playerIndicator.rotation.rotateLocalY((float) Math.toRadians(180)).rotateLocalX((float) Math.toRadians(90));
+        playerIndicator.scale = new Vector3f(2,2,2);
 //        Integer a = -1;
 //        Object b = a;
 //        String c = b;
 
-//        Card<Integer> a = new Card<>(null);
-//        Card b = a;
-//        Card<String> c = b;
+//        CardStructure.CardStructure.Card<Integer> a = new CardStructure.CardStructure.Card<>(null);
+//        CardStructure.CardStructure.Card b = a;
+//        CardStructure.CardStructure.Card<String> c = b;
 
-//        Card<Integer> a = new Card<>(5);
-//        Card b = a;
+//        CardStructure.CardStructure.Card<Integer> a = new CardStructure.CardStructure.Card<>(5);
+//        CardStructure.CardStructure.Card b = a;
 //        test(b);
 //    }
 //
-//    void test(Card<String> d) {
+//    void test(CardStructure.CardStructure.Card<String> d) {
 //        System.out.println(d);
 //        System.out.println(d.data.length());
 //    }
 
     }
-    static void buyDevelopmentCard(CardHolder<DevelopmentCard,Card<DevelopmentCard>> DevelopmentCards){
-        Player owner = DevelopmentCards.owner;
+    static void recursiveUse(CardHolder<CardHolder,UICard> buttons, Catan instance, Player owner){
+        buttons.current().effect.use(buttons.current().data,instance,owner);
+    }
+    static void buyDevelopmentCard(CardHolder<DevelopmentCard,Card<DevelopmentCard>> DevelopmentCards, Player owner){
         if (owner != null && owner.payCheck(0, 1, 1, 0, 1) && !DevelopmentCard.empty()) {
             owner.pay(0, 1, 1, 0, 1);
             DevelopmentCard d = DevelopmentCard.createNew();
@@ -126,37 +167,36 @@ public class Player implements Renderable2d {
             DevelopmentCards.add(new Card<DevelopmentCard>(d, d.meshFile()));
         }
     }
-    static void useCurrentDevelopmentCard(CardHolder<DevelopmentCard,Card<DevelopmentCard>> DevelopmentCards, Catan instance){
-        Player owner = DevelopmentCards.owner;
-        if (owner == null || owner.developmentCardLimit <= 0 || !DevelopmentCards.current().data.enabled)
+    static void doNothing(CardHolder DevelopmentCards, Catan instance, Player owner) {
+        return;
+    }
+    static void useCurrentDevelopmentCard(CardHolder<DevelopmentCard,Card<DevelopmentCard>> DevelopmentCards, Catan instance, Player owner){
+        if (owner == null || owner.developmentCardLimit <= 0 || DevelopmentCards.current() == null || !DevelopmentCards.current().data.enabled)
             return;
         owner.developmentCardLimit--;
         DevelopmentCards.current().data.use(instance); // uses current development card;
 
         DevelopmentCards.remove(DevelopmentCards.current());
     }
-    static void selectCurrentTradeInvCard(CardHolderDisplayOnly OpenTrade, Catan instance){
+    static void selectCurrentTradeInvCard(CardHolderDisplayOnly OpenTrade, Catan instance, Player owner){
         OpenTrade.select();
     }
-    static void selectCurrentResourceCard(CardHolder<Hex.resource, Card<Hex.resource>> ResourceCards, Catan instance){
-        ResourceCards.select();
+    static void selectCurrentCard(CardHolder Cards, Catan instance, Player owner){
+        Cards.select();
     }
-    static void openTradingInventory(CardHolder<CardHolder<Hex.resource, Card<Hex.resource>>, Card<CardHolder<Hex.resource, Card<Hex.resource>>>> TradingCards, Catan instance) {
-        Player owner = TradingCards.owner;
+    static void openTradingInventory(CardHolder<CardHolder<Hex.resource, Card<Hex.resource>>, Card<CardHolder<Hex.resource, Card<Hex.resource>>>> TradingCards, Catan instance, Player owner) {
         if (owner == null)
             return;
         owner.openTradingInventory(TradingCards.current().data);
     }
-    static void setVisibilityLayer(CardHolder<CardHolder.VisibilityLayer, Card<CardHolder.VisibilityLayer>> VisibilityCards, Catan instance){
-        Player owner = VisibilityCards.owner;
+    static void setVisibilityLayer(CardHolder<CardHolder.VisibilityLayer, Card<CardHolder.VisibilityLayer>> VisibilityCards, Catan instance, Player owner){
         owner.ActiveVisibilityLayer = VisibilityCards.current().data.bit; // selects current
     }
-    static void buildBuilding(CardHolder<Catan.BuildingOption, Card<Catan.BuildingOption>> BuildingCards, Catan instance){
-        Player owner = BuildingCards.owner;
+    static void buildBuilding(CardHolder<Catan.BuildingOption, Card<Catan.BuildingOption>> BuildingCards, Catan instance, Player owner){
         if (owner == null)
             return;
         if (BuildingCards.current().data == Catan.BuildingOption.DevelopmentCard)
-            buyDevelopmentCard(owner.DevelopmentCards);
+            buyDevelopmentCard(owner.DevelopmentCards, owner);
         else
             instance.startBuildThread(owner.BuildingCards.current().data);
     }
@@ -174,14 +214,13 @@ public class Player implements Renderable2d {
     }
 
 
-    static void tradeCurrentSelectedCards(CardHolder<Hex.resource, Card<Hex.resource>> ResourceCards, Catan instance){
-        Player owner = ResourceCards.owner;
+    static void tradeCurrentSelectedCards(CardHolder<Hex.resource, Card<Hex.resource>> ResourceCards, Catan instance, Player owner){
         if (owner == null)
             return;
         if (owner.OpenTrade.Data == null)
             return;
-        ResourceCards.trade(owner.OpenTrade.Data);
-        owner.OpenTrade.update();
+        owner.OpenTrade.Data.trade(ResourceCards);
+        owner.OpenTrade.update(null);
     }
     public boolean hasWon(){
         return 10<=(vp+(this == mason?2:0)+(this == baron?2:0));
